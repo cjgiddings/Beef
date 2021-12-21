@@ -32,7 +32,7 @@ Property | Description
 -|-
 **`Name`** | The unique property name.
 `Text` | The overriding text for use in comments. By default the `Text` will be the `Name` reformatted as sentence casing. Depending on whether the `Type` is `bool`, will appear in one of the two generated sentences. Where not `bool` it will be: Gets or sets a value indicating whether {text}.'. Otherwise, it will be: Gets or sets the {text}.'. To create a `<see cref="XXX"/>` within use moustache shorthand (e.g. {{Xxx}}).
-**`Type`** | The .NET `Type`. Defaults to `string`. To reference a Reference Data `Type` always prefix with `RefDataNamespace` (e.g. `RefDataNamespace.Gender`). This will ensure that the appropriate Reference Data `using` statement is used. _Shortcut:_ Where the `Type` starts with (prefix) `RefDataNamespace.` and the correspondong `RefDataType` attribute is not specified it will automatically default the `RefDataType` to `string.`
+**`Type`** | The .NET `Type`. Defaults to `string`. To reference a Reference Data `Type` always prefix with `RefDataNamespace` (e.g. `RefDataNamespace.Gender`) or shortcut `^` (e.g. `^Gender`). This will ensure that the appropriate Reference Data `using` statement is used. _Shortcut:_ Where the `Type` starts with (prefix) `RefDataNamespace.` or `^`, and the correspondong `RefDataType` attribute is not specified it will automatically default the `RefDataType` to `string.`
 **`Nullable`** | Indicates whether the .NET `Type` should be declared as nullable; e.g. `string?`. Will be inferred where the `Type` is denoted as nullable; i.e. suffixed by a `?`.
 `Inherited` | Indicates whether the property is inherited and therefore should not be output within the generated Entity class.
 `PrivateName` | The overriding private name. Overrides the `Name` to be used for private fields. By default reformatted from `Name`; e.g. `FirstName` as `_firstName`.
@@ -66,7 +66,7 @@ Provides the _Reference Data_ configuration.
 
 Property | Description
 -|-
-`RefDataType` | The underlying Reference Data Type that is also used as the Reference Data serialization identifier (SID). Valid options are: `string`, `int`, `Guid`. Defaults to `string` (being the `ReferenceDataBase.Code`) where not specified and the corresponding `Type` starts with (prefix) `RefDataNamespace.`. Note: an `Id` of type `string` is currently not supported; the use of the `Code` is the recommended approach.
+`RefDataType` | The underlying Reference Data Type that is also used as the Reference Data serialization identifier (SID). Valid options are: `string`, `int`, `Guid`. Defaults to `string` (being the `ReferenceDataBase.Code`) where not specified and the corresponding `Type` starts with (prefix) `RefDataNamespace.` or `^`. Note: an `Id` of type `string` is currently not supported; the use of the `Code` is the recommended approach.
 `RefDataList` | Indicates that the Reference Data property is to be a serializable list (`ReferenceDataSidList`). This is required to enable a list of Reference Data values (as per `RefDataType`) to be passed as an argument for example.
 `RefDataText` | Indicates whether a corresponding `Text` property is added when generating a Reference Data property, overriding the `Entity.RefDataText` selection. This is used where serializing within the Web API `Controller` and the `ExecutionContext.IsRefDataTextSerializationEnabled` is set to `true` (which is automatically set where the url contains `$text=true`).
 `RefDataMapping` | Indicates whether the property should use the underlying Reference Data mapping capabilities. Mapped properties are a special Reference Data property type that ensure value uniqueness; this allows the likes of additional to/from mappings to occur between systems where applicable.
@@ -91,7 +91,7 @@ Provides the _Manager-layer_ configuration.
 
 Property | Description
 -|-
-`IdentifierGenerator` | The Identifier Generator Type to generate the identifier on create via Dependency Injection. Should be formatted as `Type` + `^` + `Name`; e.g. `IGuidIdentifierGenerator^GuidIdGen`. Where the `Name` portion is not specified it will be inferred. Where the `Type` matches an already inferred value it will be ignored. See `Beef.Entities.IIntIdentifierGenerator`, `Beef.Entities.IGuidIdentifierGenerator` or `Beef.Entities.IStringIdentifierGenerator` for underlying implementation requirements.
+`IdentifierGenerator` | The Identifier Generator Type to generate the identifier on create via Dependency Injection. Should be formatted as `Type` + `^` + `Name`; e.g. `IGuidIdentifierGenerator^GuidIdGen`. Where the `Name` portion is not specified it will be inferred. Where the `Type` matches an already inferred value it will be ignored. See `Beef.Entities.IInt32IdentifierGenerator`, `Beef.Entities.IInt64IdentifierGenerator`, `Beef.Entities.IGuidIdentifierGenerator` or `Beef.Entities.IStringIdentifierGenerator` for underlying implementation requirements.
 
 <br/>
 
@@ -101,7 +101,7 @@ Provides the generic _Data-layer_ configuration.
 Property | Description
 -|-
 **`DataName`** | The data name where Entity.AutoImplement is selected. Defaults to the property `Name`. Represents the column name for a `Database`, or the correspinding property name for the other options.
-**`DataConverter`** | The data `Converter` class name where `Entity.AutoImplement` is selected. A `Converter` is used to convert a data source value to/from a .NET `Type` where no standard data conversion can be applied.
+**`DataConverter`** | The data `Converter` class name where `Entity.AutoImplement` is selected. A `Converter` is used to convert a data source value to/from a .NET `Type` where no standard data conversion can be applied. Where this value is suffixed by `<T>` or `{T}` this will automatically set `DataConverterIsGeneric` to `true`.
 `IsDataConverterGeneric` | Indicates whether the data `Converter` is a generic class and will automatically use the corresponding property `Type` as the generic `T`.
 `DataMapperIgnore` | Indicates whether the property should be ignored (excluded) from the `Data`-layer / data `Mapper` generated output. All properties are included by default.
 `DataAutoGenerated` | Indicates whether the `UniqueKey` property value is automatically generated by the data source on `Create`.
@@ -116,6 +116,7 @@ Property | Description
 -|-
 `DataDatabaseMapper` | The database property `Mapper` class name where `Entity.AutoImplement` is selected. A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).
 `DataDatabaseIgnore` | Indicates whether the property should be ignored (excluded) from the database `Mapper` generated output.
+**`DatabaseDbType`** | The database `DbType` override (versus inferring from the corresponding .NET Type). Overrides the inferred database type; i.e. can specify `Date` or `DateTime2`, for .NET Type `System.DateTime`.
 
 <br/>
 
@@ -124,8 +125,7 @@ Provides the specific _Entity Framework (EF)_ configuration where `Entity.AutoIm
 
 Property | Description
 -|-
-`DataEntityFrameworkMapper` | The Entity Framework property `Mapper` class name where `Entity.AutoImplement` is selected. A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).
-`DataEntityFrameworkIgnore` | Indicates whether the property should be ignored (excluded) from the Entity Framework `Mapper` generated output.
+`EntityFrameworkMapper` | The Entity Framework `Mapper` approach for the property. Valid options are: `Map`, `Ignore`, `Skip`. Defaults to `Map` which indicates the property will be explicitly mapped. A value of `Ignore` will explicitly `Ignore`, whilst a value of `Skip` will skip code-generated mapping altogether.
 
 <br/>
 
@@ -134,8 +134,7 @@ Provides the specific _Cosmos DB_ configuration where `Entity.AutoImplement` or 
 
 Property | Description
 -|-
-`DataCosmosMapper` | The Cosmos property `Mapper` class name where `Entity.AutoImplement` is selected. A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).
-`DataCosmosIgnore` | Indicates whether the property should be ignored (excluded) from the Cosmos `Mapper` generated output.
+`CosmosMapper` | The Cosmos `Mapper` approach for the property. Valid options are: `Map`, `Ignore`, `Skip`. Defaults to `Map` which indicates the property will be explicitly mapped. A value of `Ignore` will explicitly `Ignore`, whilst a value of `Skip` will skip code-generated mapping altogether.
 
 <br/>
 
@@ -144,8 +143,7 @@ Provides the specific _OData_ configuration where `Entity.AutoImplement` or `Ope
 
 Property | Description
 -|-
-`DataODataMapper` | The OData property `Mapper` class name where `Entity.AutoImplement` is selected. A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).
-`DataODataIgnore` | Indicates whether the property should be ignored (excluded) from the OData `Mapper` generated output.
+`ODataMapper` | The OData `Mapper` approach for the property. Valid options are: `Map`, `Ignore`, `Skip`. Defaults to `Map` which indicates the property will be explicitly mapped. A value of `Ignore` will explicitly `Ignore`, whilst a value of `Skip` will skip code-generated mapping altogether.
 
 <br/>
 

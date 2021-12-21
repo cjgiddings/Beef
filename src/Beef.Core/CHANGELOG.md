@@ -2,6 +2,41 @@
 
 Represents the **NuGet** versions.
 
+## v4.2.4
+- *Enhancement:* Added `HttpAgentBase` (and other related classes) as the base class to enable a `SendAsync` of an optional JSON request and return an optional JSON response (where applicable) to/from an HTTP endpoint. Leverages the base capabilites of `WebApiAgentBase`. Also, supports AutoMapper mapping of request and response values where required. This functionality is needed to support the new code-generated auto implementation of `HttpAgent` as an alternate data source.
+
+## v4.2.3
+- *Enhancement:* Add support for using [AutoMapper](https://docs.automapper.org/en/stable/index.html) for the entity-to-entity based mapping (except the database stored procedure mapping which will remain as-is). This has the advantage of broad industry support, and based on initial performance testing offers around a ~90% mapping performance improvement (after first execution).
+  - The existing `EntityMapper` has been removed. All capabilities to support `Beef.Data.Database.DatabaseMapper` have been moved to that `Assembly`.
+  - The existing `Converters` have been extended so that they can be used for `AutoMapper` and existing `Beef.Data.Database.DatabaseMapper`.
+  - Added a new `AutoMapperExtensions` class to add helper extension methods: `OperationTypes`, `Flatten` and `Unflatten` to simplify/improve usage in a _Beef_ context.
+  - Existing `Mapper`-related artefacts relocated from `Beef.Abstractions`.
+- *Enhancement:* Added support for the `IInt32Identifier` (rename) and `IInt64Identifier` (new).
+- *Enhancement:* Added validation `BetweenRule` to enable a value comparison between a from and to value.
+
+## v4.2.2
+- *Enhancement:* After a review of the newly introduced `GenericValidator` and the existing `CommonValidator` it has been decided these will be combined because the functionality was so closely aligned (duplicated). To minimize usage impact, the `GenericValidator` will be deprecated, with its unique functionality migrated into the `CommonValidator`. The `Validator` static class has been extended to support the creation of a `CommonValidator` via a new `CreateCommon` method.
+- *Fixed:* There were inconsistencies with the `MessageItem.Property` output from `DictionaryRule` and `DictionaryValidator` with respect to the underlying property names. The property name was sometimes including the key value and suffixing with `Key` and `Value` (e.g. `Foo["bar"].Key` and `Foo["bar"].Value`), and others just the key value and no suffix (e.g. `Foo["bar"]` and `Foo["bar"]`) - the latter will be the standardized output.
+
+## v4.2.1
+- *Enhancement:* Re-baseline all _Beef_ components to version v4.2.1 required by `Beef.Abstractions` introduction; including updating all dependent NuGet packages to their latest respective version.
+- *Issue [139](https://github.com/Avanade/Beef/issues/139)*. Moved the nucleus of `Beef.Core` into a new `Beef.Abstractions` - see the [issue](https://github.com/Avanade/Beef/issues/139) for the reasoning and the changes required as a result of some minor breaking changes.
+- *Issue [138](https://github.com/Avanade/Beef/issues/138)*. This is a minor overhaul to the validation capability to support validation of any types via the new `GenericValidator<T>`. The Collection and Dictionary validations have been updated so intrinsic values can be validated, as well as the existing complex entities. For the Dictionary both the `Key` and `Value` can be validated. The [`PersonValidator`](../../samples/Demo/Beef.Demo.Business/Validation/PersonValidator.cs) example has been updated to demonstrate usage. Although, there are a number of breaking changes below, for the most part there should be little impact given limited usage outside of framework itself.
+  - *Enhancement:* Added `GenericValidator<T>` which is similar to `Validator<T>` except it supports any `Type`; it is primarily intended for single intrinsic validations such as `string`, `int` or `struct`. There is a single `Rule` method to enable the additional of fluent rules. Complex `Type` validation should continue to use the existing `Validator<T>`.
+  - *Enhancement:* The `CollectionRuleItem.Create` methods have had the `Type` constraint removed; no longer just supports entity classes. Also, renamed `Validator` property to `ItemValidator` (breaking change).
+  - *Enhancement:* The `DictionaryRuleItem.Create` method has had the `Type` constraint removed; no longer just supports entity classes. Also, renamed `Validator` property to `ValueValidator` (breaking change), and added corresponding new `KeyValidator` property. `DictionaryRuleValue` has been renamed to	`DictionaryRuleItem` (breaking change).
+  - *Enhancement:* Added `ReferenceDataCodeRule` to enable validation of a reference data code, being a `string` value. A corresponding `RefDataCode` validator extension method has been added. Example: `Property(x => x.GenderCode).RefDataCode().As<Gender>()`.
+  - *Enhancement:* The `DictionaryValidator.Value` property renamed to  `DictionaryValidator.Item` (breaking change).
+  - *Enhancement:* The `Validator` static class has had the `Create` methods for collection and dictionary renamed to `CreateCollection` and `CreateDictionary` respectively (breaking changes). New `CreateGeneric<T>` method added to support the new `GenericValidator<T>`. A new `Create<TValidator>` where `TValidator` is `IValidator` method has also been added to create/get from a `ServiceProvider` (dependency injection).
+  - *Enhancement:* To enable the `GenericValidator<T>` the `IValidator.EntityType` has been renamed to `ValueType` (breaking change). The `IValidator<T>` has had the `Type` constraint removed.
+
+## v4.1.15
+- *Fixed:* The `AddBeefCachePolicyManager` parameter `useCachePolicyManagerTimer` when set to `false` was incorrectly starting the timer resulting in itself and the `CachePolicyManagerServiceHost` running.
+- *Fixed:* The `ReferenceDataBase` should not `CleanUp` the key properties as they are considered immutable.
+- *Enhancement:* Added `IWebApiAgent` which `WebApiAgentBase` now implements.
+- *Enhancement:* Removed the method parameters `memberName`, `filePath` and `lineNumber` to simplify the `WebApiAgentBase`. It is believed these are not being used by any consumers. *Note:* will look to remove all of these parameters throughout the solution within a future _Beef_ version.
+- *Enhancement:* Issue [136](https://github.com/Avanade/Beef/issues/136). Added `CollectionValidator` and `DictionaryValidator` to allow each of these types to be validated directly; versus having to be a property within a parent class.
+
 ## v4.1.14
 - *Enhancement:* Added new `DictionaryRule` validator.
 - *Fixed:* Issue [131](https://github.com/Avanade/Beef/issues/131). The `EntityMapper` did not support properties of Type `IDictionary`; this has also been corrected.

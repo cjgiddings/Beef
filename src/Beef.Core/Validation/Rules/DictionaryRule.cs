@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Avanade. Licensed under the MIT License. See https://github.com/Avanade/Beef
 
 using Beef.Reflection;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,14 +9,19 @@ using System.Threading.Tasks;
 namespace Beef.Validation.Rules
 {
     /// <summary>
-    /// Enables the validation configuration for a value within a <see cref="DictionaryRule{TEntity, TProperty}"/>.
+    /// Enables the validation configuration for an item (<see cref="KeyValuePair"/>) within a <see cref="DictionaryRule{TEntity, TProperty}"/>.
     /// </summary>
-    public interface IDictionaryRuleValue
+    public interface IDictionaryRuleItem
     {
         /// <summary>
-        /// Gets the corresponding item <see cref="IValidator"/>.
+        /// Gets the corresponding key <see cref="IValidator"/>.
         /// </summary>
-        IValidator? Validator { get; }
+        IValidator? KeyValidator { get; }
+
+        /// <summary>
+        /// Gets the corresponding value <see cref="IValidator"/>.
+        /// </summary>
+        IValidator? ValueValidator { get; }
 
         /// <summary>
         /// Gets the item <see cref="Type"/>.
@@ -36,69 +40,65 @@ namespace Beef.Validation.Rules
     }
 
     /// <summary>
-    /// Provides the means to create a <see cref="DictionaryRuleValue{TKey, TValueEntity}"/> instance.
+    /// Provides the means to create a <see cref="DictionaryRuleItem{TKey, TValue}"/> instance.
     /// </summary>
-    public static class DictionaryRuleValue
+    public static class DictionaryRuleItem
     {
         /// <summary>
-        /// Create an instance of the <see cref="DictionaryRuleValue{TKey, TValueEntity}"/> class with no <see cref="Validator"/>.
+        /// Create an instance of the <see cref="DictionaryRuleItem{TKey, TValue}"/> class.
         /// </summary>
         /// <typeparam name="TKey">The key <see cref="Type"/>.</typeparam>
-        /// <typeparam name="TValueEntity">The value entity <see cref="Type"/>.</typeparam>
-        /// <returns>The <see cref="DictionaryRuleValue{TKey, TValueEntity}"/>.</returns>
-        public static DictionaryRuleValue<TKey, TValueEntity> Create<TKey, TValueEntity>() where TValueEntity : class => new DictionaryRuleValue<TKey, TValueEntity>(null);
-
-        /// <summary>
-        /// Create an instance of the <see cref="DictionaryRuleValue{TKey, TValueEntity}"/> class with a corresponding <paramref name="validator"/>.
-        /// </summary>
-        /// <typeparam name="TKey">The key <see cref="Type"/>.</typeparam>
-        /// <typeparam name="TValueEntity">The value entity <see cref="Type"/>.</typeparam>
-        /// <param name="validator">The corresponding value <see cref="IValidator{TValueEntity}"/>.</param>
-        /// <returns>The <see cref="DictionaryRuleValue{TKey, TValueEntity}"/>.</returns>
-        public static DictionaryRuleValue<TKey, TValueEntity> Create<TKey, TValueEntity>(IValidator<TValueEntity> validator) where TValueEntity : class
-            => new(validator ?? throw new ArgumentNullException(nameof(validator)));
-
-        /// <summary>
-        /// Create an instance of the <see cref="DictionaryRuleValue{TKey, TValueEntity}"/> class leveraging the underlying <see cref="ExecutionContext.GetService{T}(bool)">service provider</see> to get the instance.
-        /// </summary>
-        /// <typeparam name="TKey">The key <see cref="Type"/>.</typeparam>
-        /// <typeparam name="TValueEntity">The value entity <see cref="Type"/>.</typeparam>
-        /// <typeparam name="TValidator">The value validator <see cref="Type"/>.</typeparam>
-        /// <param name="serviceProvider">The <see cref="IServiceProvider"/>; defaults to <see cref="ExecutionContext.ServiceProvider"/> where not specified.</param>
-        /// <returns>The <see cref="DictionaryRuleValue{TKey, TValueEntity}"/>.</returns>
-        public static DictionaryRuleValue<TKey, TValueEntity> Create<TKey, TValueEntity, TValidator>(IServiceProvider? serviceProvider = null) where TValueEntity : class where TValidator : IValidator<TValueEntity>
-            => new(serviceProvider == null
-                ? ExecutionContext.GetService<TValidator>(throwExceptionOnNull: true)!
-                : (serviceProvider.GetService<TValidator>() ?? throw new InvalidOperationException($"Attempted to get service '{typeof(TValidator).FullName}' but null was returned; this would indicate that the service has not been configured correctly.")));
+        /// <typeparam name="TValue">The value <see cref="Type"/>.</typeparam>
+        /// <param name="key">The corresponding value <see cref="IValidator{TValue}"/>.</param>
+        /// <param name="value">The corresponding value <see cref="IValidator{TValue}"/>.</param>
+        /// <returns>The <see cref="DictionaryRuleItem{TKey, TValue}"/>.</returns>
+        public static DictionaryRuleItem<TKey, TValue> Create<TKey, TValue>(IValidator<TKey>? key = null, IValidator<TValue>? value = null) => new(key, value);
     }
 
     /// <summary>
-    /// Provides validation configuration for a value within a <see cref="DictionaryRule{TEntity, TProperty}"/>.
+    /// Provides validation configuration for an item (<see cref="KeyValuePair"/>) within a <see cref="DictionaryRule{TEntity, TProperty}"/>.
     /// </summary>
     /// <typeparam name="TKey">The key <see cref="Type"/>.</typeparam>
-    /// <typeparam name="TValueEntity">The value entity <see cref="Type"/>.</typeparam>
-    public sealed class DictionaryRuleValue<TKey, TValueEntity> : IDictionaryRuleValue where TValueEntity : class
+    /// <typeparam name="TValue">The value <see cref="Type"/>.</typeparam>
+    public sealed class DictionaryRuleItem<TKey, TValue> : IDictionaryRuleItem 
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DictionaryRuleValue{TKey, TValueEntity}"/> class with a corresponding <paramref name="validator"/>.
+        /// Initializes a new instance of the <see cref="DictionaryRuleItem{TKey, TValue}"/> class with a corresponding <paramref name="valueValidator"/>.
         /// </summary>
-        /// <param name="validator">The corresponding value <see cref="IValidator{TValueEntity}"/>.</param>
-        internal DictionaryRuleValue(IValidator<TValueEntity>? validator) => Validator = validator;
+        /// <param name="keyValidator">The corresponding key <see cref="IValidator{TKey}"/>.</param>
+        /// <param name="valueValidator">The corresponding value <see cref="IValidator{TValue}"/>.</param>
+        /// <remarks><i>Note:</i> the underlying <see cref="PropertyRuleBase"/> properties <see cref="PropertyRuleBase.Name"/>, <see cref="PropertyRuleBase.JsonName"/> and <see cref="PropertyRuleBase.Text"/> will be automatically updated
+        /// (overridden) to <see cref="Validator.KeyNameDefault"/> when passing the <paramref name="keyValidator"/> (where the passed values are currently <see cref="Validator.ValueNameDefault"/>).</remarks>
+        internal DictionaryRuleItem(IValidator<TKey>? keyValidator, IValidator<TValue>? valueValidator)
+        {
+            KeyValidator = keyValidator;
+            ValueValidator = valueValidator;
+        }
+
+        /// <summary>
+        /// Gets the corresponding key <see cref="IValidator"/>.
+        /// </summary>
+        IValidator? IDictionaryRuleItem.KeyValidator => KeyValidator;
+
+        /// <summary>
+        /// Gets the corresponding value <see cref="IValidator{TValue}"/>.
+        /// </summary>
+        public IValidator<TKey>? KeyValidator { get; private set; }
 
         /// <summary>
         /// Gets the corresponding value <see cref="IValidator"/>.
         /// </summary>
-        IValidator? IDictionaryRuleValue.Validator => Validator;
+        IValidator? IDictionaryRuleItem.ValueValidator => ValueValidator;
 
         /// <summary>
-        /// Gets the corresponding value <see cref="IValidator{TValueEntity}"/>.
+        /// Gets the corresponding value <see cref="IValidator{TValue}"/>.
         /// </summary>
-        public IValidator<TValueEntity>? Validator { get; private set; }
+        public IValidator<TValue>? ValueValidator { get; private set; }
 
         /// <summary>
         /// Gets the item <see cref="Type"/>.
         /// </summary>
-        public Type ItemType => typeof(KeyValuePair<TKey, TValueEntity>);
+        public Type ItemType => typeof(KeyValuePair<TKey, TValue>);
 
         /// <summary>
         /// Gets the key <see cref="Type"/>.
@@ -108,7 +108,7 @@ namespace Beef.Validation.Rules
         /// <summary>
         /// Gets the value <see cref="Type"/>.
         /// </summary>
-        public Type ValueType => typeof(TValueEntity);
+        public Type ValueType => typeof(TValue);
     }
 
     /// <summary>
@@ -120,15 +120,18 @@ namespace Beef.Validation.Rules
         where TEntity : class
         where TProperty : IDictionary?
     {
+        private readonly Type _keyType;
         private readonly Type _valueType;
-        private IDictionaryRuleValue? _value;
+        private IDictionaryRuleItem? _item;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DictionaryRule{TEntity, TProperty}"/> class.
         /// </summary>
         public DictionaryRule()
         {
-            _valueType = ComplexTypeReflector.GetItemType(typeof(TProperty));
+            var (kt, vt) = ComplexTypeReflector.GetDictionaryType(typeof(TProperty));
+            _keyType = kt!;
+            _valueType = vt!;
         }
 
         /// <summary>
@@ -139,7 +142,7 @@ namespace Beef.Validation.Rules
         /// <summary>
         /// Indicates whether the underlying dictionary value can be null.
         /// </summary>
-        public bool AllowNullItems { get; set; }
+        public bool AllowNullValues { get; set; }
 
         /// <summary>
         /// Gets or sets the minimum count;
@@ -152,24 +155,27 @@ namespace Beef.Validation.Rules
         public int? MaxCount { get; set; }
 
         /// <summary>
-        /// Gets or sets the dictionary value validation configuration.
+        /// Gets or sets the dictionary item validation configuration.
         /// </summary>
-        public IDictionaryRuleValue? Value
+        public IDictionaryRuleItem? Item
         {
-            get => _value;
+            get => _item;
 
             set
             {
                 if (value == null)
                 {
-                    _value = value;
+                    _item = value;
                     return;
                 }
 
-                if (_valueType != value.ValueType)
-                    throw new ArgumentException($"A DictionaryRule TProperty Value type '{_valueType.Name}' must be the same as the Value {value.ValueType.Name}");
+                if (_keyType != value.KeyType)
+                    throw new ArgumentException($"A DictionaryRule TProperty KeyType '{_keyType.Name}' must be the same as the Key {value.KeyType.Name}.");
 
-                _value = value;
+                if (_valueType != value.ValueType)
+                    throw new ArgumentException($"A DictionaryRule TProperty ValueType '{_valueType.Name}' must be the same as the Value {value.ValueType.Name}.");
+
+                _item = value;
             }
         }
 
@@ -211,13 +217,19 @@ namespace Beef.Validation.Rules
                 if (!AllowNullKeys && de.Key == null)
                     hasNullKey = true;
 
-                if (!AllowNullItems && de.Value == null)
+                if (!AllowNullValues && de.Value == null)
                     hasNullValue = true;
 
                 // Validate and merge.
-                if (de.Value != null && Value?.Validator != null)
+                if (de.Key != null && Item?.KeyValidator != null)
                 {
-                    var r = await Value.Validator.ValidateAsync(de.Value, args).ConfigureAwait(false);
+                    var r = await Item.KeyValidator.ValidateAsync(de.Key, args).ConfigureAwait(false);
+                    context.MergeResult(r);
+                }
+
+                if (de.Value != null && Item?.ValueValidator != null)
+                {
+                    var r = await Item.ValueValidator.ValidateAsync(de.Value, args).ConfigureAwait(false);
                     context.MergeResult(r);
                 }
             }

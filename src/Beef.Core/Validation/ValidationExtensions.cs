@@ -19,7 +19,7 @@ namespace Beef.Validation
         #region Text
 
         /// <summary>
-        /// Updates the rule friendly name text used in validation messages (see <see cref="PropertyRuleBase{TEntity, TProperty}.Text"/>.
+        /// Updates the rule friendly name text used in validation messages (see <see cref="PropertyRuleBase.Text"/>.
         /// </summary>
         /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
         /// <typeparam name="TProperty">The property <see cref="Type"/>.</typeparam>
@@ -332,6 +332,67 @@ namespace Beef.Validation
 
         #endregion
 
+        #region Between
+
+        /// <summary>
+        /// Adds a between comparision validation against a specified from and to value (see <see cref="CompareValueRule{TEntity, TProperty}"/>).
+        /// </summary>
+        /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
+        /// <typeparam name="TProperty">The property <see cref="Type"/>.</typeparam>
+        /// <param name="rule">The <see cref="PropertyRule{TEntity, TProperty}"/> being extended.</param>
+        /// <param name="compareFromValue">The compare from value.</param>
+        /// <param name="compareToValue">The compare to value.</param>
+        /// <param name="compareFromText">The compare from text to be passed for the error message (default is to use <paramref name="compareFromValue"/>).</param>
+        /// <param name="compareToText">The compare to text to be passed for the error message (default is to use <paramref name="compareToValue"/>).</param>
+        /// <param name="exclusiveBetween">Indicates whether the between comparison is exclusive or inclusive (default).</param>
+        /// <param name="errorText">The error message format text <see cref="LText"/> (overrides the default).</param>
+        /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
+        public static PropertyRuleBase<TEntity, TProperty> Between<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, TProperty compareFromValue, TProperty compareToValue, LText? compareFromText = null, LText? compareToText = null, bool exclusiveBetween = false, LText ? errorText = null)
+            where TEntity : class
+        {
+            return Check.NotNull(rule, nameof(rule)).AddRule(new BetweenRule<TEntity, TProperty>(compareFromValue, compareToValue, compareFromText, compareToText, exclusiveBetween) { ErrorText = errorText });
+        }
+
+        /// <summary>
+        /// Adds a between comparision validation against from and to values returned by functions (<see cref="CompareValueRule{TEntity, TProperty}"/>).
+        /// </summary>
+        /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
+        /// <typeparam name="TProperty">The property <see cref="Type"/>.</typeparam>
+        /// <param name="rule">The <see cref="PropertyRule{TEntity, TProperty}"/> being extended.</param>
+        /// <param name="compareFromValueFunction">The compare from value function.</param>
+        /// <param name="compareToValueFunction">The compare to value function.</param>
+        /// <param name="compareFromTextFunction">The compare from text function (default is to use the result of the <paramref name="compareFromValueFunction"/>).</param>
+        /// <param name="compareToTextFunction">The compare to text function (default is to use the result of the <paramref name="compareToValueFunction"/>).</param>
+        /// <param name="exclusiveBetween">Indicates whether the between comparison is exclusive or inclusive (default).</param>
+        /// <param name="errorText">The error message format text <see cref="LText"/> (overrides the default).</param>
+        /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
+        public static PropertyRuleBase<TEntity, TProperty> Between<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, Func<TEntity, TProperty> compareFromValueFunction, Func<TEntity, TProperty> compareToValueFunction, Func<TEntity, LText>? compareFromTextFunction = null, Func<TEntity, LText>? compareToTextFunction = null, bool exclusiveBetween = false, LText? errorText = null)
+            where TEntity : class
+        {
+            return Check.NotNull(rule, nameof(rule)).AddRule(new BetweenRule<TEntity, TProperty>(compareFromValueFunction, compareToValueFunction, compareFromTextFunction, compareToTextFunction, exclusiveBetween) { ErrorText = errorText });
+        }
+
+        /// <summary>
+        /// Adds a between comparision validation against from and to values returned by async functions (<see cref="CompareValueRule{TEntity, TProperty}"/>).
+        /// </summary>
+        /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
+        /// <typeparam name="TProperty">The property <see cref="Type"/>.</typeparam>
+        /// <param name="rule">The <see cref="PropertyRule{TEntity, TProperty}"/> being extended.</param>
+        /// <param name="compareFromValueFunctionAsync">The compare from value function.</param>
+        /// <param name="compareToValueFunctionAsync">The compare to value function.</param>
+        /// <param name="compareFromTextFunction">The compare from text function (default is to use the result of the <paramref name="compareFromValueFunctionAsync"/>).</param>
+        /// <param name="compareToTextFunction">The compare to text function (default is to use the result of the <paramref name="compareToValueFunctionAsync"/>).</param>
+        /// <param name="exclusiveBetween">Indicates whether the between comparison is exclusive or inclusive (default).</param>
+        /// <param name="errorText">The error message format text <see cref="LText"/> (overrides the default).</param>
+        /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
+        public static PropertyRuleBase<TEntity, TProperty> Between<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, Func<TEntity, Task<TProperty>> compareFromValueFunctionAsync, Func<TEntity, Task<TProperty>> compareToValueFunctionAsync, Func<TEntity, LText>? compareFromTextFunction = null, Func<TEntity, LText>? compareToTextFunction = null, bool exclusiveBetween = false, LText? errorText = null)
+            where TEntity : class
+        {
+            return Check.NotNull(rule, nameof(rule)).AddRule(new BetweenRule<TEntity, TProperty>(compareFromValueFunctionAsync, compareToValueFunctionAsync, compareFromTextFunction, compareToTextFunction, exclusiveBetween) { ErrorText = errorText });
+        }
+
+        #endregion
+
         #region CompareValue
 
         /// <summary>
@@ -369,20 +430,20 @@ namespace Beef.Validation
         }
 
         /// <summary>
-        /// Adds a comparision validation against a value returned by a async function (<see cref="CompareValueRule{TEntity, TProperty}"/>).
+        /// Adds a comparision validation against a value returned by an async function (<see cref="CompareValueRule{TEntity, TProperty}"/>).
         /// </summary>
         /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
         /// <typeparam name="TProperty">The property <see cref="Type"/>.</typeparam>
         /// <param name="rule">The <see cref="PropertyRule{TEntity, TProperty}"/> being extended.</param>
         /// <param name="compareOperator">The <see cref="CompareOperator"/>.</param>
-        /// <param name="compareToValueFunction">The compare to function.</param>
-        /// <param name="compareToTextFunction">The compare to text function (default is to use the result of the <paramref name="compareToValueFunction"/>).</param>
+        /// <param name="compareToValueFunctionAsync">The compare to function.</param>
+        /// <param name="compareToTextFunction">The compare to text function (default is to use the result of the <paramref name="compareToValueFunctionAsync"/>).</param>
         /// <param name="errorText">The error message format text <see cref="LText"/> (overrides the default).</param>
         /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
-        public static PropertyRuleBase<TEntity, TProperty> CompareValue<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, CompareOperator compareOperator, Func<TEntity, Task<TProperty>> compareToValueFunction, Func<TEntity, LText>? compareToTextFunction = null, LText? errorText = null)
+        public static PropertyRuleBase<TEntity, TProperty> CompareValue<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, CompareOperator compareOperator, Func<TEntity, Task<TProperty>> compareToValueFunctionAsync, Func<TEntity, LText>? compareToTextFunction = null, LText? errorText = null)
             where TEntity : class
         {
-            return Check.NotNull(rule, nameof(rule)).AddRule(new CompareValueRule<TEntity, TProperty>(compareOperator, compareToValueFunction, compareToTextFunction) { ErrorText = errorText });
+            return Check.NotNull(rule, nameof(rule)).AddRule(new CompareValueRule<TEntity, TProperty>(compareOperator, compareToValueFunctionAsync, compareToTextFunction) { ErrorText = errorText });
         }
 
         #endregion
@@ -699,6 +760,19 @@ namespace Beef.Validation
             return Check.NotNull(rule, nameof(rule)).AddRule(new ReferenceDataSidListRule<TEntity, TProperty> { AllowDuplicates = allowDuplicates, MinCount = minCount, MaxCount = maxCount, ErrorText = errorText });
         }
 
+        /// <summary>
+        /// Adds a <see cref="ReferenceDataBase.Code"/> validation (see <see cref="ReferenceDataCodeRule{TEntity, TRefData}"/> to ensure the <c>Code</c> is valid.
+        /// </summary>
+        /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
+        /// <param name="rule">The <see cref="PropertyRule{TEntity, TProperty}"/> being extended.</param>
+        /// <param name="errorText">The error message format text <see cref="LText"/> (overrides the default).</param>
+        /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
+        public static ReferenceDataCodeRuleAs<TEntity> RefDataCode<TEntity>(this PropertyRuleBase<TEntity, string?> rule, LText? errorText = null)
+            where TEntity : class
+        {
+            return new ReferenceDataCodeRuleAs<TEntity>(Check.NotNull(rule, nameof(rule)), errorText);
+        }
+
         #endregion
 
         #region Collection
@@ -716,7 +790,7 @@ namespace Beef.Validation
         /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
         public static PropertyRuleBase<TEntity, TProperty> Collection<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, int minCount = 0, int? maxCount = null, ICollectionRuleItem? item = null, bool allowNullItems = false)
             where TEntity : class
-            where TProperty : System.Collections.ICollection?
+            where TProperty : System.Collections.IEnumerable?
         {
             var cr = new CollectionRule<TEntity, TProperty> { MinCount = minCount, MaxCount = maxCount, Item = item, AllowNullItems = allowNullItems };
             return Check.NotNull(rule, nameof(rule)).AddRule(cr);
@@ -727,22 +801,22 @@ namespace Beef.Validation
         #region Dictionary
 
         /// <summary>
-        /// Adds a dictionary (<see cref="System.Collections.IEnumerable"/>) validation (see <see cref="DictionaryRule{TEntity, TProperty}"/>).
+        /// Adds a dictionary (<see cref="System.Collections.IDictionary"/>) validation (see <see cref="DictionaryRule{TEntity, TProperty}"/>).
         /// </summary>
         /// <typeparam name="TEntity">The entity <see cref="Type"/>.</typeparam>
         /// <typeparam name="TProperty"></typeparam>
         /// <param name="rule">The <see cref="PropertyRule{TEntity, TProperty}"/> being extended.</param>
         /// <param name="minCount">The minimum count.</param>
         /// <param name="maxCount">The maximum count.</param>
-        /// <param name="item">The item <see cref="IDictionaryRuleValue"/> configuration.</param>
-        /// <param name="allowNullKeys">Indicates whether the underlying dictionary key must not be null.</param>
-        /// <param name="allowNullItems">Indicates whether the underlying dictionary value must not be null.</param>
+        /// <param name="item">The item <see cref="IDictionaryRuleItem"/> configuration.</param>
+        /// <param name="allowNullKeys">Indicates whether the underlying dictionary keys must not be null.</param>
+        /// <param name="allowNullValues">Indicates whether the underlying dictionary values must not be null.</param>
         /// <returns>A <see cref="PropertyRule{TEntity, TProperty}"/>.</returns>
-        public static PropertyRuleBase<TEntity, TProperty> Dictionary<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, int minCount = 0, int? maxCount = null, IDictionaryRuleValue? item = null, bool allowNullKeys = false, bool allowNullItems = false)
+        public static PropertyRuleBase<TEntity, TProperty> Dictionary<TEntity, TProperty>(this PropertyRuleBase<TEntity, TProperty> rule, int minCount = 0, int? maxCount = null, IDictionaryRuleItem? item = null, bool allowNullKeys = false, bool allowNullValues = false)
             where TEntity : class
             where TProperty : System.Collections.IDictionary?
         {
-            var cr = new DictionaryRule<TEntity, TProperty> { MinCount = minCount, MaxCount = maxCount, Value = item, AllowNullKeys = allowNullKeys, AllowNullItems = allowNullItems };
+            var cr = new DictionaryRule<TEntity, TProperty> { MinCount = minCount, MaxCount = maxCount, Item = item, AllowNullKeys = allowNullKeys, AllowNullValues = allowNullValues };
             return Check.NotNull(rule, nameof(rule)).AddRule(cr);
         }
 

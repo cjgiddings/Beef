@@ -40,12 +40,6 @@ namespace Beef.CodeGen.Config
             (ConfigType.Entity, ConfigurationEntity.Property, "IsDataConverterGeneric", "dataConverterIsGeneric"),
             (ConfigType.Entity, ConfigurationEntity.Property, "DataDatabaseMapper", "databaseMapper"),
             (ConfigType.Entity, ConfigurationEntity.Property, "DataDatabaseIgnore", "databaseIgnore"),
-            (ConfigType.Entity, ConfigurationEntity.Property, "DataEntityFrameworkMapper", "entityFrameworkMapper"),
-            (ConfigType.Entity, ConfigurationEntity.Property, "DataEntityFrameworkIgnore", "entityFrameworkIgnore"),
-            (ConfigType.Entity, ConfigurationEntity.Property, "DataCosmosMapper", "cosmosMapper"),
-            (ConfigType.Entity, ConfigurationEntity.Property, "DataCosmosIgnore", "cosmosIgnore"),
-            (ConfigType.Entity, ConfigurationEntity.Property, "DataODataMapper", "odataMapper"),
-            (ConfigType.Entity, ConfigurationEntity.Property, "DataODataIgnore", "odataIgnore"),
 
             (ConfigType.Entity, ConfigurationEntity.Operation, "OperationType", "type"),
             (ConfigType.Entity, ConfigurationEntity.Operation, "PagingArgs", "paging"),
@@ -75,34 +69,17 @@ namespace Beef.CodeGen.Config
             (ConfigType.Entity, ConfigurationEntity.Entity, "DataSvcCtorParams", true, null),
             (ConfigType.Entity, ConfigurationEntity.Entity, "DataCtorParams", true, null),
             (ConfigType.Entity, ConfigurationEntity.Entity, "WebApiCtorParams", true, null),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeEntity", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeAll", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeIData", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeData", false, (xml) => string.IsNullOrEmpty(xml) ? null : (xml == "true" ? ConfigBase.YesOption : "RequiresMapper")),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeIDataSvc", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeDataSvc", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeIManager", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeManager", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeWebApi", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeWebApiAgent", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeGrpcAgent", false, (xml) => ConvertBoolToYesNo(xml)),
+            (ConfigType.Entity, ConfigurationEntity.Entity, "ExcludeData", false, (xml) => string.IsNullOrEmpty(xml) ? null : (xml == "true" ? "Exclude" : "RequiresMapper")),
             (ConfigType.Entity, ConfigurationEntity.Entity, "WebApiAuthorize", false, (xml) => string.IsNullOrEmpty(xml) ? null : (xml == "true" ? "Authorize" : (xml == "false" ? "AllowAnonymous" : xml))),
             (ConfigType.Entity, ConfigurationEntity.Entity, "EventPublish", false, (xml) => ConvertEventPublish(xml)),
 
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeIData", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeData", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeIDataSvc", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeDataSvc", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeIManager", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeManager", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeWebApi", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeWebApiAgent", false, (xml) => ConvertBoolToYesNo(xml)),
-            (ConfigType.Entity, ConfigurationEntity.Operation, "ExcludeGrpcAgent", false, (xml) => ConvertBoolToYesNo(xml)),
             (ConfigType.Entity, ConfigurationEntity.Operation, "WebApiAuthorize", false, (xml) => string.IsNullOrEmpty(xml) ? null : (xml == "true" ? "Authorize" : (xml == "false" ? "AllowAnonymous" : xml))),
             (ConfigType.Entity, ConfigurationEntity.Operation, "WebApiOperationType", false, (xml) => throw new CodeGenException("Operation.WebApiOperationType has been renamed; please change to Operation.ManagerOperationType.")),
             (ConfigType.Entity, ConfigurationEntity.Operation, "EventPublish", false, (xml) => ConvertEventPublish(xml)),
 
             (ConfigType.Entity, ConfigurationEntity.Property, "Type", false, (xml) => xml != null && xml.StartsWith("RefDataNamespace.", StringComparison.InvariantCulture) ? $"^{xml[17..]}" : xml),
+
+            (ConfigType.Entity, ConfigurationEntity.Parameter, "Type", false, (xml) => xml != null && xml.StartsWith("RefDataNamespace.", StringComparison.InvariantCulture) ? $"^{xml[17..]}" : xml),
 
             (ConfigType.Database, ConfigurationEntity.CodeGen, "xmlns", false, (xml) => NullValue()),
             (ConfigType.Database, ConfigurationEntity.CodeGen, "xsi", false, (xml) => NullValue()),
@@ -147,8 +124,6 @@ namespace Beef.CodeGen.Config
             (ConfigType.Database, ConfigurationEntity.CdcJoin, "IncludeColumnsOnDelete", true, null),
             (ConfigType.Database, ConfigurationEntity.CdcJoin, "ExcludeColumnsFromETag", true, null)
         });
-
-        private static string? ConvertBoolToYesNo(string? xml) => string.IsNullOrEmpty(xml) ? null : (xml == "true" ? ConfigBase.YesOption : null);
 
         private static string? NullValue() => (string?)null!;
 

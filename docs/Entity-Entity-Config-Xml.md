@@ -24,6 +24,7 @@ Category | Description
 [`EntityFramework`](#EntityFramework) | Provides the specific _Entity Framework (EF)_ configuration where `AutoImplement` is `EntityFramework`.
 [`Cosmos`](#Cosmos) | Provides the specific _Cosmos_ configuration where `AutoImplement` is `Cosmos`.
 [`OData`](#OData) | Provides the specific _OData_ configuration where `AutoImplement` is `OData`.
+[`HttpAgent`](#HttpAgent) | Provides the specific _HTTP Agent_ configuration where `AutoImplement` is `HttpAgent`.
 [`Model`](#Model) | Provides the data _Model_ configuration.
 [`gRPC`](#gRPC) | Provides the _gRPC_ configuration.
 [`Exclude`](#Exclude) | Provides the _Exclude_ configuration.
@@ -42,7 +43,7 @@ Property | Description
 `EntityScope` | The entity scope option. Valid options are: `Common`, `Business`, `Autonomous`. Defaults to the `CodeGeneration.EntityScope`. Determines where the entity is scoped/defined, being `Common` or `Business` (i.e. not externally visible). Additionally, there is a special case of `Autonomous` where both a `Common` and `Business` entity are generated (where only the latter inherits from `EntityBase`, etc).
 `PrivateName` | The overriding private name. Overrides the `Name` to be used for private fields. By default reformatted from `Name`; e.g. `FirstName` as `_firstName`.
 `ArgumentName` | The overriding argument name. Overrides the `Name` to be used for argument parameters. By default reformatted from `Name`; e.g. `FirstName` as `firstName`.
-`ConstType` | The Const .NET Type option. Valid options are: `int`, `Guid`, `string`. The .NET Type to be used for the `const` values. Defaults to `string`.
+`ConstType` | The Const .NET Type option. Valid options are: `int`, `long`, `Guid`, `string`. The .NET Type to be used for the `const` values. Defaults to `string`.
 `IsInitialOverride` | Indicates whether to override the `ICleanup.IsInitial` property. Set to either `true` or `false` to override as specified; otherwise, `null` to check each property. Defaults to `null`.
 
 <br/>
@@ -52,7 +53,7 @@ Provides the _Reference Data_ configuration.
 
 Property | Description
 -|-
-**`RefDataType`** | The Reference Data identifier Type option. Valid options are: `int`, `Guid`, `string`. Required to identify an entity as being Reference Data. Specifies the underlying .NET Type used for the Reference Data identifier.
+**`RefDataType`** | The Reference Data identifier Type option. Valid options are: `int`, `long`, `Guid`, `string`. Required to identify an entity as being Reference Data. Specifies the underlying .NET Type used for the Reference Data identifier.
 `RefDataText` | Indicates whether a corresponding `Text` property is added when generating a Reference Data `Property` overriding the `CodeGeneration.RefDataText` selection. This is used where serializing within the Web API`Controller` and the `ExecutionContext.IsRefDataTextSerializationEnabled` is set to `true` (which is automatically set where the url contains `$text=true`).
 `RefDataSortOrder` | The Reference Data sort order option. Valid options are: `SortOrder`, `Id`, `Code`, `Text`. Specifies the default sort order for the underlying Reference Data collection. Defaults to `SortOrder`.
 `RefDataStringFormat` | The Reference Data `ToString` composite format. The string format supports the standard composite formatting; where the following indexes are used: `{0}` for `Id`, `{1}` for `Code` and `{2}` for `Text`. Defaults to `{2}`.
@@ -65,9 +66,9 @@ Provides the _Entity class_ configuration.
 Property | Description
 -|-
 `EntityUsing` | The namespace for the non Reference Data entities (adds as a c# <c>using</c> statement). Valid options are: `Common`, `Business`, `All`, `None`. Defaults to `EntityScope` (`Autonomous` will result in `Business`). A value of `Common` will add `.Common.Entities`, `Business` will add `.Business.Entities`, `All` to add both, and `None` to exclude any.
-`Inherits` | The base class that the entity inherits from. Defaults to `EntityBase` for a standard entity. For Reference Data it will default to `ReferenceDataBaseInt` or `ReferenceDataBaseGuid` depending on the corresponding `RefDataType` value. See `OmitEntityBase` if the desired outcome is to not inherit from any of the aforementioned base classes.
+`Inherits` | The base class that the entity inherits from. Defaults to `EntityBase` for a standard entity. For Reference Data it will default to `ReferenceDataBaseXxx` depending on the corresponding `RefDataType` value. See `OmitEntityBase` if the desired outcome is to not inherit from any of the aforementioned base classes.
 `Implements` | The list of comma separated interfaces that are to be declared for the entity class.
-`AutoInferImplements` | Indicates whether to automatically infer the interface implements for the entity from the properties declared. Will attempt to infer the following: `IGuidIdentifier`, `IIntIdentifier`, `IStringIdentifier`, `IETag` and `IChangeLog`. Defaults to `true`.
+`AutoInferImplements` | Indicates whether to automatically infer the interface implements for the entity from the properties declared. Will attempt to infer the following: `IGuidIdentifier`, `IInt32Identifier`, `IInt64Identifier`, `IStringIdentifier`, `IETag` and `IChangeLog`. Defaults to `true`.
 `Abstract` | Indicates whether the class should be defined as abstract.
 `GenericWithT` | Indicates whether the class should be defined as a generic with a single parameter `T`.
 `Namespace` | The entity namespace to be appended. Appended to the end of the standard structure as follows: `{Company}.{AppName}.Common.Entities.{Namespace}`.
@@ -130,7 +131,7 @@ Provides the data _Web API_ configuration.
 
 Property | Description
 -|-
-**`WebApiRoutePrefix`** | The `RoutePrefixAtttribute` for the corresponding entity Web API controller. This is the base (prefix) `URI` for the entity and can be further extended when defining the underlying `Operation`(s).
+**`WebApiRoutePrefix`** | The `RoutePrefixAtttribute` for the corresponding entity Web API controller. This is the base (prefix) `URI` for the entity and can be further extended when defining the underlying `Operation`(s). The `CodeGeneration.WebApiRoutePrefix` will be prepended where specified.
 `WebApiAuthorize` | The authorize attribute value to be used for the corresponding entity Web API controller; generally `Authorize` (or `true`), otherwise `AllowAnonymous` (or `false`). Defaults to the `CodeGeneration.WebApiAuthorize` configuration property (inherits) where not specified; can be overridden at the `Operation` level also.
 `WebApiCtor` | The access modifier for the generated Web API `Controller` constructor. Valid options are: `Public`, `Private`, `Protected`. Defaults to `Public`.
 **`WebApiCtorParams`** | The comma seperated list of additional (non-inferred) Dependency Injection (DI) parameters for the generated `WebApi` constructor. Each constructor parameter should be formatted as `Type` + `^` + `Name`; e.g. `IConfiguration^Config`. Where the `Name` portion is not specified it will be inferred. Where the `Type` matches an already inferred value it will be ignored.
@@ -168,8 +169,7 @@ Provides the generic _Data-layer_ configuration.
 
 Property | Description
 -|-
-**`AutoImplement`** | The data source auto-implementation option. Valid options are: `Database`, `EntityFramework`, `Cosmos`, `OData`, `None`. Defaults to `None`. Indicates that the implementation for the underlying `Operations` will be auto-implemented using the selected data source (unless explicity overridden). When selected some of the related attributes will also be required (as documented). Additionally, the `AutoImplement` indicator must be selected for each underlying `Operation` that is to be auto-implemented.
-`MapperAddStandardProperties` | Indicates that the `AddStandardProperties` method call is to be included for the generated (corresponding) `Mapper`. Defaults to `true`.
+**`AutoImplement`** | The data source auto-implementation option. Valid options are: `Database`, `EntityFramework`, `Cosmos`, `OData`, `HttpAgent`, `None`. Defaults to `None`. Indicates that the implementation for the underlying `Operations` will be auto-implemented using the selected data source (unless explicity overridden). When selected some of the related attributes will also be required (as documented). Additionally, the `AutoImplement` indicator must be selected for each underlying `Operation` that is to be auto-implemented.
 `DataConstructor` | The access modifier for the generated `Data` constructor. Valid options are: `Public`, `Private`, `Protected`. Defaults to `Public`.
 **`DataCtorParams`** | The comma seperated list of additional (non-inferred) Dependency Injection (DI) parameters for the generated `Data` constructor. Each constructor parameter should be formatted as `Type` + `^` + `Name`; e.g. `IConfiguration^Config`. Where the `Name` portion is not specified it will be inferred. Where the `Type` matches an already inferred value it will be ignored.
 `DataExtensions` | Indicates whether the `Data` extensions logic should be generated. This can be overridden using `Operation.DataExtensions`.
@@ -225,6 +225,18 @@ Property | Description
 **`ODataCollectionName`** | The name of the underlying OData collection where `AutoImplement` is `OData`. The underlying `Simple.OData.Client` will attempt to infer.
 `DataODataMapperInheritsFrom` | The name of the `Mapper` that the generated OData `Mapper` inherits from.
 `DataODataCustomMapper` | Indicates that a custom OData `Mapper` will be used; i.e. not generated. Otherwise, by default, a `Mapper` will be generated.
+
+<br/>
+
+## HttpAgent
+Provides the specific _HTTP Agent_ configuration where `AutoImplement` is `HttpAgent`.
+
+Property | Description
+-|-
+**`HttpAgentName`** | The .NET HTTP Agent interface name used where `Operation.AutoImplement` is `HttpAgent`. Defaults to `CodeGeneration.HttpAgentName` configuration property (its default value is `IHttpAgent`).
+`HttpAgentRoutePrefix` | The base HTTP Agent API route where `Operation.AutoImplement` is `HttpAgent`. This is the base (prefix) `URI` for the HTTP Agent endpoint and can be further extended when defining the underlying `Operation`(s).
+**`HttpAgentModel`** | The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`). This can be overridden within the `Operation`(s).
+`HttpAgentReturnModel` | The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`). This can be overridden within the `Operation`(s).
 
 <br/>
 

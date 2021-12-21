@@ -2,6 +2,54 @@
 
 Represents the **NuGet** versions.
 
+## v4.2.12
+- *Enhancement:* Updated the `EntityData` template to include the new `HttpAgent` data source functionality.
+- *Enhancement:* Added `CodeGeneration.WebApiRoutePrefix` which will prefix all underlying `Entity` and `Operation` routes.
+
+## v4.2.11
+- *Fixed:* Issue [161](https://github.com/Avanade/Beef/issues/161) fixed. Added support for SQL data types `TEXT` and `NTEXT` as .NET `string` when querying database characteristics for code-gen purposes.
+- *Fixed:* A SQL `DateTimeOffset` type will no longer incorrectly identify as a `DateTime` using the `DbColumn.TypeIsDateTime`. It will correctly map to the .NET `DateTimeOffset`.
+
+## v4.2.10
+- *Enhancement:* The following `PropertyConfig` properties have been renamed: `EntityFrameworkIgnore` to `EntityFrameworkMapper`, `CosmosIgnore` to `CosmosMapper`, and `ODataIgnore` to `ODataMapper`. The underlying type is no longer `bool`, and they each support the values: `Map` (default), `Ignore` and `Skip`. This is a breaking code-generation change and will need to be explicitly updated by the developer.
+
+## v4.2.9
+- *Fixed:* Issue [157](https://github.com/Avanade/Beef/issues/157) fixed. Added new `Property.DatabaseDbType` attribute to override the `DbType` for use within the `DatabaseMapper`.
+
+## v4.2.8
+- *Fixed:* Issue [152](https://github.com/Avanade/Beef/issues/152) fixed. Code-gen for an API Controller when more than two parameters was invalid; this has been corrected.
+
+## v4.2.7
+- *Enhancement:* Add support for using [AutoMapper](https://docs.automapper.org/en/stable/index.html) for the entity-to-entity based mapping (except the database stored procedure mapping which will remain as-is). This has the advantage of broad industry support, and based on initial performance testing offers around a ~90% mapping performance improvement (after first execution).
+  - The `EntityData_cs` template has been updated to support `AutoMapper`.
+  - The `ReferenceDataData_cs` template has been updated to support `AutoMapper`.
+  - The gRPC-related templates have been updated to support `AutoMapper`.
+
+## v4.2.6
+- *Enhancement:* The `Entity.ExcludeAll` configuration will automatically default to `true` where an entity does not have at least one `Operation` specified.
+- *Enhancement:* The `EntityWebApiController_cs`, `EntityManager_cs`, `EntityDataSvc_cs` and `EntityData_cs` handlebars templates have been updated to further simplify the code generated.
+- *Enhancement:* Added the `Beef.Codegen.Core` version number to the code-gen console output.
+
+## v4.2.5
+- *Fixed:* The `ServiceCollectionExtensions` were not being generated correctly for the `Manager` and `DataSvc` layers.
+
+## v4.2.4
+- *Fixed:* There was a YAML configuration issue using `Yes` and `No` for option strings, as these are reserved for `boolean` values. All properties that previously supported both `Yes` and `No` are now booleans. The one exception is `Entity.ExcludeData` which has options: `Include` (default), `Exclude` and `RequiresMapper`. These are all automatically translated from their respective existing XML values.
+- *Fixed:* The JSON Schemas have been updated to leverage `definitions` for defining each object type; this fixes the issue where only the first item in an array was validating correctly (and supporting corresponding intellisense).
+
+## v4.2.3
+- *Fixed:* Issue [143](https://github.com/Avanade/Beef/issues/143) fixed. Where referencing a reference data property within a reference data class and there is a need to perform a data conversion an `InvalidCastException` (`Object must implement IConvertible.`) was being thrown. Generated code has been corrected.
+
+## v4.2.2
+- *Fixed:* Issue [141](https://github.com/Avanade/Beef/issues/141) fixed. Exclude `using company.appName.DataSvc` statement output where all operations are custom. 
+
+## v4.2.1
+- *Enhancement:* Re-baseline all _Beef_ components to version v4.2.1 required by `Beef.Abstractions` introduction; including updating all dependent NuGet packages to their latest respective version.
+- *Enhancement:* A code-generation change was required to the Reference Data Web API Controller template as a result of the changes to the `ReferenceDataFilter` and new `ReferenceDataFilterer` for the `Beef.Abstractions` change.
+
+## v4.1.27
+- *Fixed:* A Web API agent reference data parameter should use the underlying `RefDataType` not the reference data `Type` itself as the operation parameter (decouple reference data types from Agent contracts).
+
 ## v4.1.26
 - *Enhancement:* Added `DateTimeOffset` to the list of supported system and nullable types.
 - *Enhancement:* Added shorthand for a `Property.Type` where the `^` is the equivalent to `RefDataNamespace.`; e.g. `RefDataNamespace.Gender` can be replaced by `^Gender`. The XML to YAML conversion will replace with the shorthand where previously specified.

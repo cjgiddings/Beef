@@ -2,6 +2,17 @@
 
 Represents the **NuGet** versions.
 
+## v4.2.3
+- *Enhancement:* Add support for using [AutoMapper](https://docs.automapper.org/en/stable/index.html) for the entity-to-entity based mapping (remove existing `EntityMapper`-based functionality) - may result in _breaking changes_:
+  - `EfDbArgs<T, TModel>` renamed to `EfDbArgs` and updated to support the new AutoMapper requirements.
+  - `IEfDbArgs` removed to simplify.
+  - `EfDbBase` and `EfDbQuery` updated to support AutoMapper mappings.
+  - `EfMapper` was deleted.
+  - _Note:_ All code-generated artefacts must be re-generated.
+
+## v4.2.1
+- *Enhancement:* Re-baseline all _Beef_ components to version v4.2.1 required by `Beef.Abstractions` introduction; including updating all dependent NuGet packages to their latest respective version.
+
 ## v4.1.4
 - *Enhancement:* Added new `IEfDbContext` to enable access to the underlying `IDatabase` instance.
 - *Enhancement:* Added `IEfDb.EventOutboxInvoker` to access the corresponding event outbox capability.

@@ -12,7 +12,10 @@ namespace Beef.Core.UnitTest.Validation
     [TestFixture]
     public class ReferenceDataValidatorTest
     {
-        public class Gender : ReferenceDataBaseInt
+        [OneTimeSetUp]
+        public void OneTimeSetUp() => Beef.TextProvider.SetTextProvider(new DefaultTextProvider());
+
+        public class Gender : ReferenceDataBaseInt32
         {
             public override object Clone()
             {
@@ -20,10 +23,7 @@ namespace Beef.Core.UnitTest.Validation
             }
         }
 
-        public class GenderValidator : ReferenceDataValidatorBase<Gender, GenderValidator>
-        {
-
-        }
+        public class GenderValidator : ReferenceDataValidatorBase<Gender, GenderValidator> { }
 
         [Test]
         public async Task Validate_Null()

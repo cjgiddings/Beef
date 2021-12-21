@@ -52,6 +52,7 @@ namespace My.Hr.Api
 
             // Add the core beef services.
             services.AddBeefExecutionContext()
+                    .AddBeefTextProviderAsSingleton()
                     .AddBeefSystemTime()
                     .AddBeefRequestCache()
                     .AddBeefCachePolicyManager(_config.GetSection("BeefCaching").Get<CachePolicyConfig>())
@@ -85,6 +86,9 @@ namespace My.Hr.Api
             // Add transactional event outbox services.
             services.AddGeneratedDatabaseEventOutbox();
             services.AddBeefDatabaseEventOutboxPublisherService();
+
+            // Add AutoMapper services via Assembly-based probing for Profiles.
+            services.AddAutoMapper(Beef.Mapper.AutoMapperProfile.Assembly, typeof(EmployeeData).Assembly);
 
             // Add additional services; note Beef requires NewtonsoftJson.
             services.AddControllers().AddNewtonsoftJson();

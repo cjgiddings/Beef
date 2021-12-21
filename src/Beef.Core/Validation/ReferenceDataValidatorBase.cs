@@ -15,7 +15,7 @@ namespace Beef.Validation
         where TEntity : ReferenceDataBase
         where TValidator : ReferenceDataValidatorBase<TEntity, TValidator>, new()
     {
-        private static readonly TValidator _default = new TValidator();
+        private static readonly TValidator _default = new();
 
 #pragma warning disable CA1000 // Do not declare static members on generic types; by-design, results in a consistent static defined default instance without the need to specify generic type to consume.
         /// <summary>
@@ -60,7 +60,10 @@ namespace Beef.Validation
         {
             if (context.Value != null)
             {
-                if (context.Parent.Value is ReferenceDataBaseInt && (int)context.Value != 0)
+                if (context.Parent.Value is ReferenceDataBaseInt32 && (int)context.Value != 0)
+                    return Task.CompletedTask;
+
+                if (context.Parent.Value is ReferenceDataBaseInt64 && (long)context.Value != 0)
                     return Task.CompletedTask;
 
                 if (context.Parent.Value is ReferenceDataBaseGuid && (Guid)context.Value != Guid.Empty)

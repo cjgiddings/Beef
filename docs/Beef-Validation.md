@@ -27,18 +27,23 @@ The following represent the available rules:
 
 Rule | Description 
 -|-
-`CollectionRule` | Provides entity collection validation including `MinCount`, `MaxCount`, per item validation `CollectionRuleItem` and duplicate checking. 
+`BetweenRule` | Provides a comparision validation between a specified from and to value.
+`CollectionRule` | Provides collection (`IEnumerable`) validation including `MinCount`, `MaxCount`, per item validation `CollectionRuleItem` and duplicate checking. 
+`CommonRule` | Provides for integrating a common validation against a specified property.
 `ComparePropertyRule` | Provides a comparision validation against another property within the same entity; also confirms other property has no errors prior to comparison.
 `CompareValueRule` | Provides a comparision validation against a specified value. 
 `CustomRule` | Provides a custom validation against a specified property.
 `DecimalRule` | Represents a numeric rule that validates `DecimalPlaces` (fractional-part length) and `MaxDigits` (being the sum of the integer-part and fractional-part lengths). 
+`DictionaryRule` | Provides dictionary (`IDictionary`) validation including `MinCount`, `MaxCount` and per item validation `DictionaryRuleItem`. 
 `DuplicateRule` | Provides validation where the rule predicate must return `false` to not be considered a duplicate. 
 `EntityRule` | Provides entity validation. 
+`ExistsRule` | Provides validation where the rule predicate must return `true` or a value to verify it exists.
 `ImmutableRule` | Provides validation where the rule predicate must return `true` to be considered valid (has not been modified).
 `MandatoryRule` | Provides mandatory validation; determined as mandatory when it contains its default value.
 `MustRule` | Provides validation where the rule predicate must return `true` to be considered valid.
 `NumericRule` | Represents a numeric rule to validate whether negatives are allowed.
 `OverrideRule` | Provides the ability to override the property value.
+`ReferenceDataCodeRule` | Provides validation for a `ReferenceDataBase.Code`; validates that it exists and that the corresponding `ReferenceDataBase.IsValid`.
 `ReferenceDataRule` | Provides validation for a `ReferenceDataBase`; validates that the `ReferenceDataBase.IsValid`.
 `ReferenceDataSidListRule` | Provides validation for a `ReferenceDataSidListBase` including `MinCount`, `MaxCount`, per item `ReferenceDataBase.IsValid` and whether to `AllowDuplicates`.
 `StringRule` | Provides `string` validation including `MinLength`, `MaxLength` and `Regex`.
@@ -66,12 +71,14 @@ The following represent the available extension methods:
 Extension method | Description | Underlying rule
 -|-|-
 `AreValid()` | Adds a *reference data list* validation. | `ReferenceDataSidListRule`
+`Between()` | Adds a *between comparision* validation. | `BetweenRule`
 `Collection()` | Adds a *collection* validation. | `CollectionRule`
 `CompareProperty()` | Adds a *property comparison* validation. | `ComparePropertyRule`
 `CompareValue()` | Adds a *value comparison* validation. | `CompareValueRule`
 `Currency()` | Adds a *currency* validation for a `decimal` using a `NumberFormatInfo`. | `DecimalRule`
 `Custom()` | Adds a *custom* validation. | `CustomRule`
-`Default` | Adds a property value override where the current value is the default for the `Type`. | `OverrideRule`
+`Default()` | Adds a property value override where the current value is the default for the `Type`. | `OverrideRule`
+`Dictionary()` | Adds a *dictionary* validation. | `DictionaryRule`
 `Duplicate()` | Adds a *duplicate* validation. | `DuplicateRule`
 `Entity()` | Adds an *entity* validation. | `EntityValidationRule`
 `EntityCollection()` | Adds an *entity collection* validation. | `EntityCollectionValidationRule`
@@ -82,6 +89,7 @@ Extension method | Description | Underlying rule
 `Must()` | Adds a *must* validation. | `MustRule`
 `Numeric()` | Adds a *numeric* validation. | `NumericRule` or `DecimalRule`
 `Override` | Adds a property value override. | `OverrideRule`
+`RefDataCode` | Adds a *reference data code* validation. | `ReferenceDataCodeRule`
 `String()` | Adds a `string` validation. | `StringRule`
 `Wildcard()` | Adds a `string` *wildcard* validation. | `WildcardRule`
 
@@ -102,6 +110,9 @@ All error messages are managed as an embedded resources accessible via the `Vali
 Property | Format string
 -|-
 `AllowNegativesFormat` | {0} must not be negative.
+`BetweenInclusiveFormat` | {0} must be between {2} and {3}.
+`BetweenExclusiveFormat` | {0} must be between {2} and {3} (exclusive).
+`CollectionNullItemFormat` | {0} contains one or more items that are not specified.
 `CompareEqualFormat` | {0} must be equal to {2}.
 `CompareGreaterThanEqualFormat` | {0} must be greater than or equal to {2}.
 `CompareGreaterThanFormat` | {0} must be greater than {2}.
@@ -110,7 +121,10 @@ Property | Format string
 `CompareNotEqualFormat` | {0} must not be equal to {2}.
 `DecimalPlacesFormat` | {0} exceeds the maximum specified number of decimal places ({2}).
 `DependsOnFormat` | {0} is required where {2} has a value.
+`DictionaryNullKeyFormat` | {0} contains one or more keys that are not specified.
+`DictionaryNullValueFormat` | {0} contains one or more values that are not specified.
 `DuplicateFormat` | {0} already exists and would result in a duplicate.
+`DuplicateValue2Format` | {0} contains duplicates; {2} value specified more than once.
 `DuplicateValueFormat` | {0} contains duplicates; {2} value '{3}' specified more than once.
 `ExistsFormat` | {0} is not found; a valid value is required.
 `ImmutableFormat` | {0} is not allowed to change; please reset value.
@@ -127,7 +141,7 @@ Property | Format string
 `RegexFormat` | {0} is invalid.
 `WildcardFormat` | {0} contains invalid or non-supported wildcard selection.
 
-The validation framework passes the friendly text name as `{0}`, and the validating value as `{1}` for inclusion in the final message output. Higher numbered format strings are applicable to the specific validator consuming.
+The validation framework passes the friendly text name as `{0}`, and the validating value as `{1}` for inclusion in the final message output. Higher numbered format strings are applicable to the specific validator rule consuming.
 
 <br/>
 
@@ -139,7 +153,7 @@ There are multiple means to leverage the validation framework.
 
 ### Entity-based validator class
 
-The primary means for an entity-based validator is to inherit from the `Validator` class and use the static `Default` instance. This will ensure the property configurations are instantiated once as the unerlying property expressions can be a relatively expensive (performance) operation.
+The primary means for an entity-based validator is to inherit from the `Validator` class. The instance should be instantiated once (and cached) where possible as the underlying property expressions can be a relatively expensive (performance) operation.
 
 Additionally, the `OnValidate` method can be overridden to add more complex and/or cross-property validations as required.
 
@@ -186,13 +200,14 @@ An example is as follows:
 var person = new Person { Name = "Freddie", Birthday = new DateTime(1946, 09, 05);
 
 // Create an entity-based validator on the fly.
-var result = await Validator<Test>.Create()
+var result = await Validator.Create<Test>()
     .HasProperty(x => x.Name, p => p.Mandatory().String(maxLength: 50))
     .HasProperty(x => x.Birthdar, p => p.CompareValue(CompareOperator.LessThanEqual, DateTime.Now, "today"))
     .ValidateAsync(person);
 ```
 
 <br/>
+
 
 ### Value-based validator
 
@@ -233,12 +248,12 @@ Property(x => x.DateTo).Mandatory.CompareProperty(CompareOperator.GreaterThanEqu
 
 ### Common validations
 
-To support reusablility of property validations a `CommonValidator` is used to enable. This allows for the validation logic to be defined once, and reused (shared) across multiple validations.
+To support reusablility of property validations a `CommonValidator` is used to enable. This allows for the validation logic to be defined once, and reused (shared) across multiple validations. This validator also enables validation to be configured for non-entities (e.g. intrinisic types).
 
 An example is as follows:
 
 ``` csharp
-var cv = CommonValidator<string> _cv = CommonValidator.Create<string>(v => v.String(5).Must(x => x.Value != "XXXXX"));
+var cv = CommonValidator<string> _cv = Validator.CreateCommon<string>(v => v.String(5).Must(x => x.Value != "XXXXX"));
 
 var v = Validator.Create<TestData>()
     .HasProperty(x => x.Text, p => p.Mandatory().Common(cv));

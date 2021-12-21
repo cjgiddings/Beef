@@ -45,6 +45,10 @@ operations: [
     [CategorySchema("Manager", Title = "Provides the _Manager-layer_ configuration.")]
     [CategorySchema("DataSvc", Title = "Provides the _Data Services-layer_ configuration.")]
     [CategorySchema("Data", Title = "Provides the generic _Data-layer_ configuration.")]
+    [CategorySchema("Database", Title = "Provides the specific _Database (ADO.NET)_ configuration where `AutoImplement` is `Database`.")]
+    [CategorySchema("Cosmos", Title = "Provides the specific _Cosmos_ configuration where `AutoImplement` is `Cosmos`.")]
+    [CategorySchema("OData", Title = "Provides the specific _OData_ configuration where `AutoImplement` is `OData`.")]
+    [CategorySchema("HttpAgent", Title = "Provides the specific _HTTP Agent_ configuration where `AutoImplement` is `HttpAgent`.")]
     [CategorySchema("gRPC", Title = "Provides the _gRPC_ configuration.")]
     [CategorySchema("Exclude", Title = "Provides the _Exclude_ configuration.")]
     [CategorySchema("Collections", Title = "Provides related child (hierarchical) configuration.")]
@@ -144,7 +148,7 @@ operations: [
         /// Gets or sets the operation override for the `Entity.AutoImplement`.
         /// </summary>
         [JsonProperty("autoImplement", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Data", Title = "The operation override for the `Entity.AutoImplement`.", IsImportant = true, Options = new string[] { "Database", "EntityFramework", "Cosmos", "OData", "None" },
+        [PropertySchema("Data", Title = "The operation override for the `Entity.AutoImplement`.", IsImportant = true, Options = new string[] { "Database", "EntityFramework", "Cosmos", "OData", "HttpAgent", "None" },
             Description = "Defaults to `Entity.AutoImplement`. The corresponding `Entity.AutoImplement` must be defined for this to be enacted. Auto-implementation is applicable for all `Operation.Type` options with the exception of `Custom`.")]
         public string? AutoImplement { get; set; }
 
@@ -172,19 +176,27 @@ operations: [
             Description = "Where using an `EventOutbox` this is ignored as it is implied through its usage.")]
         public bool? DataTransaction { get; set; }
 
+        #endregion
+
+        #region Database
+
         /// <summary>
         /// Gets or sets the database stored procedure name.
         /// </summary>
         [JsonProperty("databaseStoredProc", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Data", Title = "The database stored procedure name used where `Operation.AutoImplement` is `Database`.",
+        [PropertySchema("Database", Title = "The database stored procedure name used where `Operation.AutoImplement` is `Database`.",
             Description = "Defaults to `sp` + `Entity.Name` + `Operation.Name`; e.g. `spPersonCreate`.")]
         public string? DatabaseStoredProc { get; set; }
+
+        #endregion
+
+        #region Cosmos
 
         /// <summary>
         /// Gets or sets the Cosmos <c>ContainerId</c> override.
         /// </summary>
         [JsonProperty("cosmosContainerId", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Data", Title = "The Cosmos `ContainerId` override used where `Operation.AutoImplement` is `Cosmos`.",
+        [PropertySchema("Cosmos", Title = "The Cosmos `ContainerId` override used where `Operation.AutoImplement` is `Cosmos`.",
             Description = "Overrides the `Entity.CosmosContainerId`.")]
         public string? CosmosContainerId { get; set; }
 
@@ -192,9 +204,13 @@ operations: [
         /// Gets or sets the C# code override to be used for setting the optional Cosmos <c>PartitionKey</c>.
         /// </summary>
         [JsonProperty("cosmosPartitionKey", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Data", Title = "The C# code override to be used for setting the optional Cosmos `PartitionKey` used where `Operation.AutoImplement` is `Cosmos`.",
+        [PropertySchema("Cosmos", Title = "The C# code override to be used for setting the optional Cosmos `PartitionKey` used where `Operation.AutoImplement` is `Cosmos`.",
             Description = "Overrides the `Entity.CosmosPartitionKey`.")]
         public string? CosmosPartitionKey { get; set; }
+
+        #endregion
+
+        #region OData
 
         /// <summary>
         /// Gets or sets the override name of the underlying OData collection name where <see cref="OperationConfig.AutoImplement"/> is <c>OData</c>.
@@ -205,6 +221,42 @@ operations: [
         public string? ODataCollectionName { get; set; }
 
         #endregion
+
+        #region HttpAgent
+
+        /// <summary>
+        /// Gets or sets the HTTP Agent API route prefix where `Operation.AutoImplement` is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentRoute", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The HTTP Agent API route where `Operation.AutoImplement` is `HttpAgent`.",
+            Description = "This is appended to the `Entity.HttpAgentRoutePrefix`.")]
+        public string? HttpAgentRoute { get; set; }
+
+        /// <summary>
+        /// Gets or sets the HTTP Agent API Method for the operation.
+        /// </summary>
+        [JsonProperty("httpAgentMethod", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The HTTP Agent Method for the operation.", IsImportant = true, Options = new string[] { "HttpGet", "HttpPost", "HttpPut", "HttpDelete", "HttpPatch" },
+            Description = "Defaults to `Operation.WebApiMethod`.")]
+        public string? HttpAgentMethod { get; set; }
+
+        /// <summary>
+        /// Gets or sets the corresponding HTTP Agent model name required where <see cref="AutoImplement"/> is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentModel", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`).", IsImportant = true,
+            Description = "This can be overridden within the `Operation`(s).")]
+        public string? HttpAgentModel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the corresponding HTTP Agent model name required where <see cref="AutoImplement"/> is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentReturnModel", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`).",
+            Description = "Defaults to `Operation.HttpAgentModel` where the `Operation.ReturnType` is equal to `Entity.Name` (same type). This can be overridden within the `Operation`(s).")]
+        public string? HttpAgentReturnModel { get; set; }
+
+        #endregion 
 
         #region Manager
 
@@ -411,75 +463,75 @@ operations: [
         #region Exclude
 
         /// <summary>
-        /// The option to exclude the generation of <b>all</b> <c>Operation</c> related output.
+        /// Indicates whether to exclude the generation of <b>all</b> <c>Operation</c> related output.
         /// </summary>
         [JsonProperty("excludeAll", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of all `Operation` related output.", IsImportant = true, Options = new string[] { NoOption, YesOption },
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of all `Operation` related output.", IsImportant = true,
             Description = "Is a shorthand means for setting all of the other `Exclude*` properties to `true`.")]
-        public string? ExcludeAll { get; set; }
+        public bool? ExcludeAll { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the <c>Data</c> interface (<c>IXxxData.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the <c>Data</c> interface (<c>IXxxData.cs</c>).
         /// </summary>
         [JsonProperty("excludeIData", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the `Data` interface (`IXxxData.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeIData { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the `Data` interface (`IXxxData.cs`) output.")]
+        public bool? ExcludeIData { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the <c>Data</c> class (<c>XxxData.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the <c>Data</c> class (<c>XxxData.cs</c>).
         /// </summary>
         [JsonProperty("excludeData", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the `Data` class (`XxxData.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeData { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the `Data` class (`XxxData.cs`) output.")]
+        public bool? ExcludeData { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the <c>DataSvc</c> interface (<c>IXxxDataSvc.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the <c>DataSvc</c> interface (<c>IXxxDataSvc.cs</c>).
         /// </summary>
         [JsonProperty("excludeIDataSvc", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the `DataSvc` interface (`IXxxDataSvc.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeIDataSvc { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the `DataSvc` interface (`IXxxDataSvc.cs`) output.")]
+        public bool? ExcludeIDataSvc { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the <c>DataSvc</c> class (<c>XxxDataSvc.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the <c>DataSvc</c> class (<c>XxxDataSvc.cs</c>).
         /// </summary>
         [JsonProperty("excludeDataSvc", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the `DataSvc` class (`XxxDataSvc.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeDataSvc { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the `DataSvc` class (`XxxDataSvc.cs`) output.")]
+        public bool? ExcludeDataSvc { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the <c>Manager</c> interface (<c>IXxxManager.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the <c>Manager</c> interface (<c>IXxxManager.cs</c>).
         /// </summary>
         [JsonProperty("excludeIManager", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the `Manager` interface (`IXxxManager.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeIManager { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the `Manager` interface (`IXxxManager.cs`) output.")]
+        public bool? ExcludeIManager { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the <c>Manager</c> class (<c>XxxManager.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the <c>Manager</c> class (<c>XxxManager.cs</c>).
         /// </summary>
         [JsonProperty("excludeManager", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the `Manager` class (`XxxManager.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeManager { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the `Manager` class (`XxxManager.cs`) output.")]
+        public bool? ExcludeManager { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the WebAPI <c>Controller</c> class (<c>XxxController.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the WebAPI <c>Controller</c> class (<c>XxxController.cs</c>).
         /// </summary>
         [JsonProperty("excludeWebApi", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the WebAPI `Controller` class (`XxxController.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeWebApi { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the WebAPI `Controller` class (`XxxController.cs`) output.")]
+        public bool? ExcludeWebApi { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the WebAPI <c>Agent</c> class (<c>XxxAgent.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the WebAPI <c>Agent</c> class (<c>XxxAgent.cs</c>).
         /// </summary>
         [JsonProperty("excludeWebApiAgent", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the WebAPI consuming `Agent` class (`XxxAgent.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeWebApiAgent { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the WebAPI consuming `Agent` class (`XxxAgent.cs`) output.")]
+        public bool? ExcludeWebApiAgent { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the operation within the gRPC <c>Agent</c> class (<c>XxxAgent.cs</c>).
+        /// Indicates whether to exclude the generation of the operation within the gRPC <c>Agent</c> class (<c>XxxAgent.cs</c>).
         /// </summary>
         [JsonProperty("excludeGrpcAgent", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the operation within the gRPC consuming `Agent` class (`XxxAgent.cs`) output.", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeGrpcAgent { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the operation within the gRPC consuming `Agent` class (`XxxAgent.cs`) output.")]
+        public bool? ExcludeGrpcAgent { get; set; }
 
         #endregion
 
@@ -555,6 +607,11 @@ operations: [
         /// Gets the <see cref="ParameterConfig"/> collection without parameters that do not need cleaning.
         /// </summary>
         public List<ParameterConfig>? CleanerParameters => Parameters!.Where(x => !x.LayerPassing!.StartsWith("ToManager", StringComparison.OrdinalIgnoreCase) && !x.IsPagingArgs).ToList();
+
+        /// <summary>
+        /// Indicates whether any parameters exist with WebApiFrom contain "FromEntityProperties".
+        /// </summary>
+        public bool HasFromEntityPropertiesParameters => Parameters.Any(x => x.WebApiFrom == "FromEntityProperties");
 
         /// <summary>
         /// The operation event properties.
@@ -718,6 +775,16 @@ operations: [
         public bool DataEventSend { get; set; } = true;
 
         /// <summary>
+        /// Indicates whether the HTTP Agent operation requires a mapper.
+        /// </summary>
+        public bool HttpAgentRequiresMapper { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the HTTP agent sent statement - composed internally given complexity to construct.
+        /// </summary>
+        public string? HttpAgentSendStatement { get; set; }
+
+        /// <summary>
         /// <inheritdoc/>
         /// </summary>
         protected override void Prepare()
@@ -812,9 +879,6 @@ operations: [
             DataEntityMapper = DefaultWhereNull(DataEntityMapper, () => AutoImplement switch
             {
                 "Database" => "DbMapper",
-                "EntityFramework" => "EfMapper",
-                "Cosmos" => "CosmosMapper",
-                "OData" => "ODataMapper",
                 _ => null
             });
 
@@ -877,18 +941,19 @@ operations: [
 
             DataSvcTransaction = DefaultWhereNull(DataSvcTransaction, () => CompareValue(EventPublish, "DataSvc") && CompareValue(Parent!.EventTransaction, true));
             DataSvcExtensions = DefaultWhereNull(DataSvcExtensions, () => Parent!.DataSvcExtensions);
-            ExcludeIData = DefaultWhereNull(ExcludeIData, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeData = DefaultWhereNull(ExcludeData, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeIDataSvc = DefaultWhereNull(ExcludeIDataSvc, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeDataSvc = DefaultWhereNull(ExcludeDataSvc, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeIManager = DefaultWhereNull(ExcludeIManager, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeManager = DefaultWhereNull(ExcludeManager, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeWebApi = DefaultWhereNull(ExcludeWebApi, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeWebApiAgent = DefaultWhereNull(ExcludeWebApiAgent, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeGrpcAgent = DefaultWhereNull(ExcludeGrpcAgent, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
+            ExcludeAll = DefaultWhereNull(ExcludeAll, () => false);
+            ExcludeIData = DefaultWhereNull(ExcludeIData, () => CompareValue(ExcludeAll, true));
+            ExcludeData = DefaultWhereNull(ExcludeData, () => CompareValue(ExcludeAll, true));
+            ExcludeIDataSvc = DefaultWhereNull(ExcludeIDataSvc, () => CompareValue(ExcludeAll, true));
+            ExcludeDataSvc = DefaultWhereNull(ExcludeDataSvc, () => CompareValue(ExcludeAll, true));
+            ExcludeIManager = DefaultWhereNull(ExcludeIManager, () => CompareValue(ExcludeAll, true));
+            ExcludeManager = DefaultWhereNull(ExcludeManager, () => CompareValue(ExcludeAll, true));
+            ExcludeWebApi = DefaultWhereNull(ExcludeWebApi, () => CompareValue(ExcludeAll, true));
+            ExcludeWebApiAgent = DefaultWhereNull(ExcludeWebApiAgent, () => CompareValue(ExcludeAll, true));
+            ExcludeGrpcAgent = DefaultWhereNull(ExcludeGrpcAgent, () => CompareValue(ExcludeAll, true));
 
             if (Type == "Patch")
-                ExcludeIData = ExcludeData = ExcludeIDataSvc = ExcludeDataSvc = ExcludeIManager = ExcludeManager = YesOption;
+                ExcludeIData = ExcludeData = ExcludeIDataSvc = ExcludeDataSvc = ExcludeIManager = ExcludeManager = true;
 
             PrepareParameters();
             PrepareEvents();
@@ -924,6 +989,7 @@ operations: [
             }
 
             PrepareData();
+            PrepareHttpAgent();
 
             GrpcReturnMapper = SystemTypes.Contains(BaseReturnType) ? null : GrpcReturnType;
             GrpcReturnConverter = BaseReturnType switch
@@ -1042,7 +1108,7 @@ operations: [
 
                 case "EntityFramework":
                     DataArgs.Name = "_ef";
-                    DataArgs.Type = "IEfDbArgs";
+                    DataArgs.Type = "EfDbArgs";
 
                     if (EventOutbox != "None" && EventOutbox != "Database")
                         throw new CodeGenException(this, nameof(EventOutbox), $"An Operation.AutoImplement (or Entity.AutoImplement) of 'EntityFramework' is at odds with the EventOutbox persistence of '{EventOutbox}'.");
@@ -1051,19 +1117,28 @@ operations: [
 
                 case "Cosmos":
                     DataArgs.Name = "_cosmos";
-                    DataArgs.Type = "ICosmosDbArgs";
+                    DataArgs.Type = "CosmosDbArgs";
 
-                    if (EventOutbox != "None" && EventOutbox != "Cosmos")
+                    if (EventOutbox != "None")
                         throw new CodeGenException(this, nameof(EventOutbox), $"An Operation.AutoImplement (or Entity.AutoImplement) of 'Cosmos' is at odds with the EventOutbox persistence of '{EventOutbox}'.");
 
                     break;
 
                 case "OData":
                     DataArgs.Name = "_odata";
-                    DataArgs.Type = "IODataArgs";
+                    DataArgs.Type = "ODataArgs";
 
-                    if (EventOutbox != "None" && EventOutbox != "OData")
+                    if (EventOutbox != "None")
                         throw new CodeGenException(this, nameof(EventOutbox), $"An Operation.AutoImplement (or Entity.AutoImplement) of 'OData' is at odds with the EventOutbox persistence of '{EventOutbox}'.");
+
+                    break;
+
+                case "HttpAgent":
+                    DataArgs.Name = "_httpAgent";
+                    DataArgs.Type = null;
+
+                    if (EventOutbox != "None")
+                        throw new CodeGenException(this, nameof(EventOutbox), $"An Operation.AutoImplement (or Entity.AutoImplement) of 'HttpAgent' is at odds with the EventOutbox persistence of '{EventOutbox}'.");
 
                     break;
 
@@ -1143,6 +1218,56 @@ operations: [
 
             if (WebApiLocation.FirstOrDefault() != '/')
                 WebApiLocation = "/" + WebApiLocation;
+        }
+
+        /// <summary>
+        /// Prepares the HTTP Agent properties.
+        /// </summary>
+        private void PrepareHttpAgent()
+        {
+            if (AutoImplement != "HttpAgent")
+                return;
+
+            HttpAgentRoute = string.IsNullOrEmpty(Parent!.HttpAgentRoutePrefix) ? HttpAgentRoute : Parent!.HttpAgentRoutePrefix + (string.IsNullOrEmpty(HttpAgentRoute) ? null : "/" + HttpAgentRoute);
+            HttpAgentMethod = DefaultWhereNull(HttpAgentMethod, () => WebApiMethod);
+            HttpAgentModel = DefaultWhereNull(HttpAgentModel, () => ValueType == null ? null : Parent!.HttpAgentModel);
+            HttpAgentReturnModel = DefaultWhereNull(HttpAgentReturnModel, () => BaseReturnType == "void" || BaseReturnType != Parent!.Name ? null : Parent!.HttpAgentReturnModel);
+
+            //var _dataArgs = HttpAgentSendArgs.Create(_mapper, )
+            //(await httpAgent.SendAsync(HttpMethod.{HttpAgentMethod}, {HttpAgentRoute}, value)).Value;
+            var sb = new StringBuilder($"{(HttpAgentReturnModel == null ? "" : "(")}await {DataArgs!.Name}.Send");
+            if (HttpAgentModel != null && HttpAgentReturnModel != null)
+                sb.Append($"MappedRequestResponseAsync<{BaseReturnType}, {HttpAgentReturnModel}, {ReturnType}, {HttpAgentReturnModel}>(");
+            else if (HttpAgentModel != null)
+                sb.Append($"MappedRequestAsync<{BaseReturnType}, {HttpAgentReturnModel}>(");
+            else if (HttpAgentReturnModel != null)
+                sb.Append($"MappedResponseAsync<{ReturnType}, {HttpAgentReturnModel}>(");
+            else
+            {
+                sb.Append("Async(");
+                HttpAgentRequiresMapper = false;
+            }
+
+            sb.Append($"__dataArgs");
+            if (ValueType != null)
+                sb.Append(", value");
+
+            sb.Append(").ConfigureAwait(false)");
+            if (HttpAgentReturnModel == null)
+                sb.Append(";");
+            else
+                sb.Append(").Value;");
+
+            HttpAgentSendStatement = sb.ToString();
+
+            HttpAgentMethod = HttpAgentMethod switch
+            {
+                "HttpPost" => "Post",
+                "HttpPut" => "Put",
+                "HttpPatch" => "Patch",
+                "HttpDelete" => "Delete",
+                _ => "Get"
+            };
         }
     }
 }

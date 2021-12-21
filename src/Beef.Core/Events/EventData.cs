@@ -180,7 +180,7 @@ namespace Beef.Events
         /// Creates (clones) a new instance copying the existing values.
         /// </summary>
         /// <returns></returns>
-        public EventMetadata CopyMetadata() => new EventMetadata
+        public EventMetadata CopyMetadata() => new()
         {
             EventId = EventId,
             TenantId = TenantId,
@@ -259,8 +259,12 @@ namespace Beef.Events
 
             switch (value)
             {
-                case IIntIdentifier ii:
+                case IInt32Identifier ii:
                     ed.Key = ii.Id;
+                    break;
+
+                case IInt64Identifier li:
+                    ed.Key = li.Id;
                     break;
 
                 case IGuidIdentifier gi:

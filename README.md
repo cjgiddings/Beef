@@ -26,12 +26,12 @@ The key industralisation goals are:
 As a result of the _Beef_ [Architecture](#Architecture), supporting [Framework](#Framework) and included [Code Generation](#Code-generation) capabilities, enterprise-grade APIs can be developed in a matter of hours, not days, in a standardised and consistent manner.
 
 The APIs created will have the following capabilities out-of-the-box with limited developer effort, so the developer can focus on the key business value:
-- Rich [Entity](./docs/Layer-Entity.md) (DTO) functionality including [`INotifyPropertyChanged`](https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel.inotifypropertychanged), [`IEditableObject`](https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel.ieditableobject), [`IEquatable`](https://docs.microsoft.com/en-us/dotnet/api/system.iequatable-1), [`ICloneable`](./src/Beef.Core/Entities/ICloneable.cs), [`ICopyFrom`](./src/Beef.Core/Entities/ICopyFrom.cs), [`ICleanUp`](./src/Beef.Core/Entities/ICleanUp.cs), [`IUniqueKey`](./src/Beef.Core/Entities/IUniqueKey.cs), etc.
+- Rich [Entity](./docs/Layer-Entity.md) (DTO) functionality including [`INotifyPropertyChanged`](https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel.inotifypropertychanged), [`IEditableObject`](https://docs.microsoft.com/en-us/dotnet/api/system.componentmodel.ieditableobject), [`IEquatable`](https://docs.microsoft.com/en-us/dotnet/api/system.iequatable-1), [`ICloneable`](./src/Beef.Abstractions/Entities/ICloneable.cs), [`ICopyFrom`](./src/Beef.Abstractions/Entities/ICopyFrom.cs), [`ICleanUp`](./src/Beef.Abstractions/Entities/ICleanUp.cs), [`IUniqueKey`](./src/Beef.Abstractions/Entities/IUniqueKey.cs), etc.
 - Rich [Reference data](./docs/Reference-Data.md) capabilities, including caching, optimised serialisation, and enriched API endpoints.
 - Rich [Validation](./docs/Beef-Validation.md) capability to simplify and ensure data integrity and consistency.
 - CRUD (Create, Read, Update and Delete) for Database ([Stored procedures](./src/Beef.Data.Database/README.md) and [Entity Framework](./src/Beef.Data.EntityFrameworkCore/README.md)), [Cosmos DB](./src/Beef.Data.Cosmos/README.md) and [OData](./src/Beef.Data.OData/README.md) in a standardised manner. 
 - An approach and tooling to automate and manage [database](./tools/Beef.Database.Core/README.md) set up, configuration, and deployment.
-- [Paging](./src/Beef.Core/Entities/PagingArgs.cs) (skip and top) and resulting total count, that flows from API through to the underlying data source in a consistent and seamless manner.
+- [Paging](./src/Beef.Abstractions/Entities/PagingArgs.cs) (skip and top) and resulting total count, that flows from API through to the underlying data source in a consistent and seamless manner.
 - [ETag](https://en.wikipedia.org/wiki/HTTP_ETag) (concurrency) and `If-Match`/`If-None-Match` handling.
 - JSON response field [filtering (include/exclude)](./src/Beef.Core/Json/JsonPropertyFilter.cs) to minimise resulting payload size (e.g. `$fields=firstname,lastname`)
 - [HTTP Patch](./docs/Http-Patch.md) support, where required, in a simplified and consistent manner.
@@ -39,7 +39,9 @@ The APIs created will have the following capabilities out-of-the-box with limite
 - [gRPC](./src/Beef.Grpc/README.md) server (and client) integration.
 - [Event](./src/Beef.Events/README.md) publishing and subcribing to enable an event-driven architecture.
 
-To implement these included capabilities would literally take  months/years to build and test; these are available for developers to use immediately, and contribute back if so inclined.
+To implement these included capabilities would literally take  months/years to build and test; these are available for developers to use immediately, and contribute back if so inclined. The capabilities and implementations have been influenced by _Microsoft's best practices for cloud applications_; specifically:
+- [RESTful web API design](https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-design)
+- [Web API implementation](https://docs.microsoft.com/en-us/azure/architecture/best-practices/api-implementation)
 
 To [get started](#Getting-started) a .NET Core [template capability](./templates/Beef.Template.Solution/README.md) is provided to enable you to get a solution up and running in minutes.
 
@@ -137,6 +139,7 @@ The **key** capabilities for _Beef_ are enabled by the following runtime assembl
 
 Assembly | Description | NuGet | Changes
 -|-|-|-
+[`Beef.Abstractions`](./src/Beef.Abstractions) | Core foundational framework. | [![NuGet version](https://badge.fury.io/nu/Beef.Abstractions.svg)](https://badge.fury.io/nu/Beef.Abstractions) | [Log](./src/Beef.Abstractions/CHANGELOG.md)
 [`Beef.Core`](./src/Beef.Core) | Core foundational framework. | [![NuGet version](https://badge.fury.io/nu/Beef.core.svg)](https://badge.fury.io/nu/Beef.core) | [Log](./src/Beef.Core/CHANGELOG.md)
 [`Beef.AspNetCore.WebApi`](./src/Beef.AspNetCore.WebApi) | ASP.NET Core Web API framework. | [![NuGet version](https://badge.fury.io/nu/Beef.AspNetCore.WebApi.svg)](https://badge.fury.io/nu/Beef.AspNetCore.WebApi) | [Log](./src/Beef.AspNetCore.WebApi/ChangeLog.md)
 [`Beef.Data.Database`](./src/Beef.Data.Database) | ADO.NET database framework. | [![NuGet version](https://badge.fury.io/nu/Beef.Data.Database.svg)](https://badge.fury.io/nu/Beef.Data.Database) | [Log](./src/Beef.Data.Database/CHANGELOG.md)
@@ -218,6 +221,11 @@ The following are references to additional documentation (these are all accessib
 
 - [v4.1](./docs/Dependency-injection-v4-1.md)
 - [v3.1](./docs/Upgrade-dotnet-core-v3-1.md)
+
+### External links of potential interest
+
+- Versioning - [article](https://mathieu.fenniak.net/aint-nobody-got-time-for-that-api-versioning/), [implementation](https://github.com/dotnet/aspnet-api-versioning) - _Beef_ has no specific support or opinion with respect to versioning approach and/or implementation.
+- Domain-driven design - [Wikipedia](https://en.wikipedia.org/wiki/Domain-driven_design), [Fowler](https://martinfowler.com/bliki/DomainDrivenDesign.html), Microsoft authored articles: [article](https://docs.microsoft.com/en-us/azure/architecture/microservices/model/domain-analysis), [article](https://docs.microsoft.com/en-us/archive/msdn-magazine/2009/february/best-practice-an-introduction-to-domain-driven-design), [article](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/ddd-oriented-microservice) and [article](https://docs.microsoft.com/en-us/azure/architecture/microservices/migrate-monolith) - _Beef_ encourages the DDD approach, and is why _Entity_ naming and convention is foundational within.
 
 <br/>
 

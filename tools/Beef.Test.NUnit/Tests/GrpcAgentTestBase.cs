@@ -57,7 +57,7 @@ namespace Beef.Test.NUnit.Tests
             else
                 TestContext.Out.WriteLine($"gRPC Status: {result.Status.StatusCode} ({result.Status.Detail})");
 
-            TestContext.Out.WriteLine($"HttpStatusCode: {result.HttpStatusCode} ({(int)result.HttpStatusCode})");
+            TestContext.Out.WriteLine($"HttpStatusCode: {result.StatusCode} ({(int)result.StatusCode})");
             TestContext.Out.WriteLine($"Elapsed (ms): {(sw == null ? "none" : sw.ElapsedMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture))}");
             TestContext.Out.WriteLine($"Messages: {(result.Messages == null || result.Messages.Count == 0 ? "none" : "")}");
 
@@ -108,8 +108,8 @@ namespace Beef.Test.NUnit.Tests
             TestContext.Out.WriteLine();
 
             // Perform checks.
-            if (_expectedStatusCode.HasValue && _expectedStatusCode != result.HttpStatusCode)
-                Assert.Fail($"Expected HttpStatusCode was '{_expectedStatusCode} ({(int)_expectedStatusCode})'; actual was {result.HttpStatusCode} ({(int)result.HttpStatusCode}).");
+            if (_expectedStatusCode.HasValue && _expectedStatusCode != result.StatusCode)
+                Assert.Fail($"Expected HttpStatusCode was '{_expectedStatusCode} ({(int)_expectedStatusCode})'; actual was {result.StatusCode} ({(int)result.StatusCode}).");
 
             if (_expectedErrorType.HasValue && _expectedErrorType != result.ErrorType)
                 Assert.Fail($"Expected ErrorType was '{_expectedErrorType}'; actual was '{result.ErrorType}'.");
@@ -138,14 +138,20 @@ namespace Beef.Test.NUnit.Tests
                 throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the constructor could not be determined.");
 
             var pis = ctors[0].GetParameters();
-            if (pis.Length != 1)
-                throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the constructor must only have a single parameter.");
+            if (pis.Length != 2)
+                throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the constructor must have two parameters.");
 
             var pi = pis[0];
             if (pi.ParameterType != typeof(IWebApiAgentArgs) && !pi.ParameterType.GetInterfaces().Contains(typeof(IWebApiAgentArgs)))
-                throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the constructor parameter must implement IWebApiAgentArgs.");
+                throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the first constructor parameter must implement IWebApiAgentArgs.");
 
-            var obj = Activator.CreateInstance(typeof(TAgent), args ?? CreateAgentArgs(pi.ParameterType));
+            var pi2 = pis[1];
+            if (pi2.ParameterType != typeof(AutoMapper.IMapper))
+                throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the second constructor parameter must be of Type AutoMapper.IMapper.");
+
+            var obj = Activator.CreateInstance(typeof(TAgent), args ?? CreateAgentArgs(pi.ParameterType), AgentTesterBase.LocalServiceProvider.GetService<AutoMapper.IMapper>()
+                ?? throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created; the LocalServiceProvider is unable to construct the required AutoMapper.IMapper parameter instance."));
+
             if (obj == null)
                 throw new InvalidOperationException($"An instance of {typeof(TAgent).Name} was unable to be created.");
 

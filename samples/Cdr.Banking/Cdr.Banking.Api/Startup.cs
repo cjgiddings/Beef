@@ -54,6 +54,7 @@ namespace Cdr.Banking.Api
 
             // Add the core beef services (including the customized ExecutionContext).
             services.AddBeefExecutionContext(_ => new Business.ExecutionContext())
+                    .AddBeefTextProviderAsSingleton()
                     .AddBeefSystemTime()
                     .AddBeefRequestCache()
                     .AddBeefCachePolicyManager(_config.GetSection("BeefCaching").Get<CachePolicyConfig>())
@@ -77,6 +78,9 @@ namespace Cdr.Banking.Api
                     .AddGeneratedValidationServices()
                     .AddGeneratedDataSvcServices()
                     .AddGeneratedDataServices();
+
+            // Add AutoMapper services via Assembly-based probing for Profiles.
+            services.AddAutoMapper(Beef.Mapper.AutoMapperProfile.Assembly, typeof(AccountData).Assembly);
 
             // Add services; note Beef requires NewtonsoftJson.
             services.AddControllers().AddNewtonsoftJson();

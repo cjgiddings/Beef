@@ -30,18 +30,26 @@ namespace My.Hr.Business.Data
     {
         private readonly IDatabase _db;
         private readonly IEfDb _ef;
+        private readonly AutoMapper.IMapper _mapper;
         private readonly IEventPublisher _evtPub;
 
-        private Func<IQueryable<EfModel.Employee>, EmployeeArgs?, IEfDbArgs, IQueryable<EfModel.Employee>>? _getByArgsOnQuery;
+        private Func<IQueryable<EfModel.Employee>, EmployeeArgs?, EfDbArgs, IQueryable<EfModel.Employee>>? _getByArgsOnQuery;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmployeeData"/> class.
         /// </summary>
         /// <param name="db">The <see cref="IDatabase"/>.</param>
         /// <param name="ef">The <see cref="IEfDb"/>.</param>
+        /// <param name="mapper">The <see cref="AutoMapper.IMapper"/>.</param>
         /// <param name="evtPub">The <see cref="IEventPublisher"/>.</param>
-        public EmployeeData(IDatabase db, IEfDb ef, IEventPublisher evtPub)
-            { _db = Check.NotNull(db, nameof(db)); _ef = Check.NotNull(ef, nameof(ef)); _evtPub = Check.NotNull(evtPub, nameof(evtPub)); EmployeeDataCtor(); }
+        public EmployeeData(IDatabase db, IEfDb ef, AutoMapper.IMapper mapper, IEventPublisher evtPub)
+        {
+            _db = Check.NotNull(db, nameof(db));
+            _ef = Check.NotNull(ef, nameof(ef));
+            _mapper = Check.NotNull(mapper, nameof(mapper));
+            _evtPub = Check.NotNull(evtPub, nameof(evtPub));
+            EmployeeDataCtor();
+        }
 
         partial void EmployeeDataCtor(); // Enables additional functionality to be added to the constructor.
 
@@ -50,52 +58,42 @@ namespace My.Hr.Business.Data
         /// </summary>
         /// <param name="id">The <see cref="Employee"/> identifier.</param>
         /// <returns>The selected <see cref="Employee"/> where found.</returns>
-        public Task<Employee?> GetAsync(Guid id)
-            => DataInvoker.Current.InvokeAsync(this, () => GetOnImplementationAsync(id));
+        public Task<Employee?> GetAsync(Guid id) => DataInvoker.Current.InvokeAsync(this, () => GetOnImplementationAsync(id));
 
         /// <summary>
         /// Creates a new <see cref="Employee"/>.
         /// </summary>
         /// <param name="value">The <see cref="Employee"/>.</param>
         /// <returns>The created <see cref="Employee"/>.</returns>
-        public Task<Employee> CreateAsync(Employee value)
+        public Task<Employee> CreateAsync(Employee value) => _db.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _db.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __result = await CreateOnImplementationAsync(Check.NotNull(value, nameof(value))).ConfigureAwait(false);
-                _evtPub.PublishValue(__result, new Uri($"my/hr/employee/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"My.Hr.Employee", "Created");
-                return __result;
-            });
-        }
+            var __result = await CreateOnImplementationAsync(Check.NotNull(value, nameof(value))).ConfigureAwait(false);
+            _evtPub.PublishValue(__result, new Uri($"my/hr/employee/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"My.Hr.Employee", "Created");
+            return __result;
+        });
 
         /// <summary>
         /// Updates an existing <see cref="Employee"/>.
         /// </summary>
         /// <param name="value">The <see cref="Employee"/>.</param>
         /// <returns>The updated <see cref="Employee"/>.</returns>
-        public Task<Employee> UpdateAsync(Employee value)
+        public Task<Employee> UpdateAsync(Employee value) => _db.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _db.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __result = await UpdateOnImplementationAsync(Check.NotNull(value, nameof(value))).ConfigureAwait(false);
-                _evtPub.PublishValue(__result, new Uri($"my/hr/employee/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"My.Hr.Employee", "Updated");
-                return __result;
-            });
-        }
+            var __result = await UpdateOnImplementationAsync(Check.NotNull(value, nameof(value))).ConfigureAwait(false);
+            _evtPub.PublishValue(__result, new Uri($"my/hr/employee/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"My.Hr.Employee", "Updated");
+            return __result;
+        });
 
         /// <summary>
         /// Deletes the specified <see cref="Employee"/>.
         /// </summary>
         /// <param name="id">The Id.</param>
-        public Task DeleteAsync(Guid id)
+        public Task DeleteAsync(Guid id) => _db.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _db.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __dataArgs = DbMapper.Default.CreateArgs("[Hr].[spEmployeeDelete]");
-                await _db.DeleteAsync(__dataArgs, id).ConfigureAwait(false);
-                _evtPub.Publish(new Uri($"my/hr/employee/{_evtPub.FormatKey(id)}", UriKind.Relative), $"My.Hr.Employee", "Deleted", id);
-            });
-        }
+            var __dataArgs = DbMapper.Default.CreateArgs("[Hr].[spEmployeeDelete]");
+            await _db.DeleteAsync(__dataArgs, id).ConfigureAwait(false);
+            _evtPub.Publish(new Uri($"my/hr/employee/{_evtPub.FormatKey(id)}", UriKind.Relative), $"My.Hr.Employee", "Deleted", id);
+        });
 
         /// <summary>
         /// Gets the <see cref="EmployeeBaseCollectionResult"/> that contains the items that match the selection criteria.
@@ -103,16 +101,13 @@ namespace My.Hr.Business.Data
         /// <param name="args">The Args (see <see cref="Entities.EmployeeArgs"/>).</param>
         /// <param name="paging">The <see cref="PagingArgs"/>.</param>
         /// <returns>The <see cref="EmployeeBaseCollectionResult"/>.</returns>
-        public Task<EmployeeBaseCollectionResult> GetByArgsAsync(EmployeeArgs? args, PagingArgs? paging)
+        public Task<EmployeeBaseCollectionResult> GetByArgsAsync(EmployeeArgs? args, PagingArgs? paging) => DataInvoker.Current.InvokeAsync(this, async () =>
         {
-            return DataInvoker.Current.InvokeAsync(this, async () =>
-            {
-                EmployeeBaseCollectionResult __result = new EmployeeBaseCollectionResult(paging);
-                var __dataArgs = EmployeeBaseData.EfMapper.Default.CreateArgs(__result.Paging!);
-                __result.Result = _ef.Query(__dataArgs, q => _getByArgsOnQuery?.Invoke(q, args, __dataArgs) ?? q).SelectQuery<EmployeeBaseCollection>();
-                return await Task.FromResult(__result).ConfigureAwait(false);
-            });
-        }
+            EmployeeBaseCollectionResult __result = new EmployeeBaseCollectionResult(paging);
+            var __dataArgs = EfDbArgs.Create(_mapper, __result.Paging!);
+            __result.Result = _ef.Query<EmployeeBase, EfModel.Employee>(__dataArgs, q => _getByArgsOnQuery?.Invoke(q, args, __dataArgs) ?? q).SelectQuery<EmployeeBaseCollection>();
+            return await Task.FromResult(__result).ConfigureAwait(false);
+        });
 
         /// <summary>
         /// Terminates an existing <see cref="Employee"/>.
@@ -120,15 +115,12 @@ namespace My.Hr.Business.Data
         /// <param name="value">The <see cref="TerminationDetail"/>.</param>
         /// <param name="id">The <see cref="Employee"/> identifier.</param>
         /// <returns>The updated <see cref="Employee"/>.</returns>
-        public Task<Employee> TerminateAsync(TerminationDetail value, Guid id)
+        public Task<Employee> TerminateAsync(TerminationDetail value, Guid id) => _db.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _db.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __result = await TerminateOnImplementationAsync(Check.NotNull(value, nameof(value)), id).ConfigureAwait(false);
-                _evtPub.PublishValue(__result, new Uri($"my/hr/employee/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"My.Hr.Employee", "Terminated", id);
-                return __result;
-            });
-        }
+            var __result = await TerminateOnImplementationAsync(Check.NotNull(value, nameof(value)), id).ConfigureAwait(false);
+            _evtPub.PublishValue(__result, new Uri($"my/hr/employee/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"My.Hr.Employee", "Terminated", id);
+            return __result;
+        });
 
         /// <summary>
         /// Provides the <see cref="Employee"/> property and database column mapping.

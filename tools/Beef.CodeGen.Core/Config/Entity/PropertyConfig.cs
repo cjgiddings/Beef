@@ -67,7 +67,7 @@ properties: [
         /// </summary>
         [JsonProperty("type", DefaultValueHandling = DefaultValueHandling.Ignore)]
         [PropertySchema("Key", Title = "The .NET `Type`.", IsImportant = true,
-            Description = "Defaults to `string`. To reference a Reference Data `Type` always prefix with `RefDataNamespace` (e.g. `RefDataNamespace.Gender`) or `^` (e.g. `^Gender`). This will ensure that the appropriate Reference Data " +
+            Description = "Defaults to `string`. To reference a Reference Data `Type` always prefix with `RefDataNamespace` (e.g. `RefDataNamespace.Gender`) or shortcut `^` (e.g. `^Gender`). This will ensure that the appropriate Reference Data " +
             "`using` statement is used. _Shortcut:_ Where the `Type` starts with (prefix) `RefDataNamespace.` or `^`, and the correspondong `RefDataType` attribute is not specified it will automatically default the `RefDataType` to `string.`")]
         public string? Type { get; set; }
 
@@ -295,13 +295,13 @@ properties: [
         [PropertySchema("Manager", Title = "The Identifier Generator Type to generate the identifier on create via Dependency Injection.",
             Description = "Should be formatted as `Type` + `^` + `Name`; e.g. `IGuidIdentifierGenerator^GuidIdGen`. Where the `Name` portion is not specified it will be inferred. " +
                 "Where the `Type` matches an already inferred value it will be ignored. " +
-                "See `Beef.Entities.IIntIdentifierGenerator`, `Beef.Entities.IGuidIdentifierGenerator` or `Beef.Entities.IStringIdentifierGenerator` for underlying implementation requirements.")]
+                "See `Beef.Entities.IInt32IdentifierGenerator`, `Beef.Entities.IInt64IdentifierGenerator`, `Beef.Entities.IGuidIdentifierGenerator` or `Beef.Entities.IStringIdentifierGenerator` for underlying implementation requirements.")]
         public string? IdentifierGenerator { get; set; }
 
         #endregion
 
         #region Data
-
+    
         /// <summary>
         /// Gets or sets the data name where `Entity.AutoImplement` is selected.
         /// </summary>
@@ -315,7 +315,7 @@ properties: [
         /// </summary>
         [JsonProperty("dataConverter", DefaultValueHandling = DefaultValueHandling.Ignore)]
         [PropertySchema("Data", Title = "The data `Converter` class name where `Entity.AutoImplement` is selected.", IsImportant = true,
-            Description = "A `Converter` is used to convert a data source value to/from a .NET `Type` where no standard data conversion can be applied.")]
+            Description = "A `Converter` is used to convert a data source value to/from a .NET `Type` where no standard data conversion can be applied. Where this value is suffixed by `<T>` or `{T}` this will automatically set `DataConverterIsGeneric` to `true`.")]
         public string? DataConverter { get; set; }
 
         /// <summary>
@@ -368,62 +368,49 @@ properties: [
         [PropertySchema("Database", Title = "Indicates whether the property should be ignored (excluded) from the database `Mapper` generated output.")]
         public bool? DatabaseIgnore { get; set; }
 
+        /// <summary>
+        /// Gets or sets the database DbType override (versus inferring from the corresponding .NET Type).
+        /// </summary>
+        [JsonProperty("databaseDbType", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("Database", Title = "The database `DbType` override (versus inferring from the corresponding .NET Type).", IsImportant = true,
+            Description = "Overrides the inferred database type; i.e. can specify `Date` or `DateTime2`, for .NET Type `System.DateTime`.")]
+        public string? DatabaseDbType { get; set; }
+
         #endregion
 
         #region EntityFramework
 
         /// <summary>
-        /// Gets or sets the Entity Framework property `Mapper` class name where `Entity.AutoImplement` is selected.
+        /// The Entity Framework `Mapper` approach for the property.
         /// </summary>
         [JsonProperty("entityFrameworkMapper", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("EntityFramework", Title = "The Entity Framework property `Mapper` class name where `Entity.AutoImplement` is selected.",
-            Description = "A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).")]
+        [PropertySchema("EntityFramework", Title = "The Entity Framework `Mapper` approach for the property.", Options = new string[] { "Map", "Ignore", "Skip" },
+            Description = "Defaults to `Map` which indicates the property will be explicitly mapped. A value of `Ignore` will explicitly `Ignore`, whilst a value of `Skip` will skip code-generated mapping altogether.")]
         public string? EntityFrameworkMapper { get; set; }
-
-        /// <summary>
-        /// Indicates whether the property should be ignored (excluded) from the Entity Framework `Mapper` generated output.
-        /// </summary>
-        [JsonProperty("entityFrameworkIgnore", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("EntityFramework", Title = "Indicates whether the property should be ignored (excluded) from the Entity Framework `Mapper` generated output.")]
-        public bool? EntityFrameworkIgnore { get; set; }
 
         #endregion
 
         #region Cosmos
 
         /// <summary>
-        /// Gets or sets the Cosmos property `Mapper` class name where `Entity.AutoImplement` is selected.
+        /// The Cosmos `Mapper` approach for the property.
         /// </summary>
         [JsonProperty("cosmosMapper", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Cosmos", Title = "The Cosmos property `Mapper` class name where `Entity.AutoImplement` is selected.",
-            Description = "A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).")]
+        [PropertySchema("Cosmos", Title = "The Cosmos `Mapper` approach for the property.", Options = new string[] { "Map", "Ignore", "Skip" },
+            Description = "Defaults to `Map` which indicates the property will be explicitly mapped. A value of `Ignore` will explicitly `Ignore`, whilst a value of `Skip` will skip code-generated mapping altogether.")]
         public string? CosmosMapper { get; set; }
-
-        /// <summary>
-        /// Indicates whether the property should be ignored (excluded) from the Cosmos `Mapper` generated output.
-        /// </summary>
-        [JsonProperty("cosmosIgnore", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Cosmos", Title = "Indicates whether the property should be ignored (excluded) from the Cosmos `Mapper` generated output.")]
-        public bool? CosmosIgnore { get; set; }
 
         #endregion
 
         #region OData
 
         /// <summary>
-        /// Gets or sets the OData property `Mapper` class name where `Entity.AutoImplement` is selected.
+        /// The OData `Mapper` approach for the property.
         /// </summary>
         [JsonProperty("odataMapper", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("OData", Title = "The OData property `Mapper` class name where `Entity.AutoImplement` is selected.",
-            Description = "A `Mapper` is used to map a data source value to/from a .NET complex `Type` (i.e. class with one or more properties).")]
+        [PropertySchema("OData", Title = "The OData `Mapper` approach for the property.", Options = new string[] { "Map", "Ignore", "Skip" },
+            Description = "Defaults to `Map` which indicates the property will be explicitly mapped. A value of `Ignore` will explicitly `Ignore`, whilst a value of `Skip` will skip code-generated mapping altogether.")]
         public string? ODataMapper { get; set; }
-
-        /// <summary>
-        /// Indicates whether the property should be ignored (excluded) from the OData `Mapper` generated output.
-        /// </summary>
-        [JsonProperty("odataIgnore", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("OData", Title = "Indicates whether the property should be ignored (excluded) from the OData `Mapper` generated output.")]
-        public bool? ODataIgnore { get; set; }
 
         #endregion
 
@@ -504,7 +491,7 @@ properties: [
         /// <summary>
         /// Gets the formatted summary text for the Reference Data Text property.
         /// </summary>
-        public string? SummaryRefDataText => $"Gets the corresponding {{{{{Name}}}}} text (read-only where selected).";
+        public string? SummaryRefDataText => ToComments($"Gets the corresponding {{{{{Name}}}}} text (read-only where selected).");
 
         /// <summary>
         /// Gets the formatted summary text when used in a parameter context.
@@ -541,7 +528,24 @@ properties: [
         /// <summary>
         /// Gets or sets the declared type including nullability.
         /// </summary>
-        public string? DeclaredType { get; set; } 
+        public string? DeclaredType { get; set; }
+
+        /// <summary>
+        /// Gets the data reader type (used for ReferenceDataData layer only).
+        /// </summary>
+        public string? DataReaderType => string.IsNullOrEmpty(RefDataType)
+            ? DeclaredType
+            : DataConverter switch
+                {
+                    "ReferenceDataGuidIdConverter" => "Guid",
+                    "ReferenceDataNullableGuidIdConverter" => "Guid?",
+                    "ReferenceDataInt32IdConverter" => "int",
+                    "ReferenceDataNullableInt32IdConverter" => "int?",
+                    "ReferenceDataInt64IdConverter" => "long",
+                    "ReferenceDataNullableInt64IdConverter" => "long?",
+                    "ReferenceDataStringIdConverter" => "string?",
+                    _ => DeclaredType
+                };
 
         /// <summary>
         /// Gets the computed property name.
@@ -564,14 +568,19 @@ properties: [
         public string DataMapperPropertyName => string.IsNullOrEmpty(RefDataType) ? Name! : CompareNullOrValue(DataConverter, "ReferenceDataCodeConverter") ? PropertyName : Name!;
 
         /// <summary>
+        /// Gets or sets the data converter name.
+        /// </summary>
+        public string? DataConverterName => string.IsNullOrEmpty(DataConverter) ? null : $"{DataConverter}{(CompareValue(DataConverterIsGeneric, true) ? $"<{Type}>" : "")}";
+
+        /// <summary>
         /// Gets the data converter C# code.
         /// </summary>
-        public string? DataConverterCode => string.IsNullOrEmpty(DataConverter) ? null : $".SetConverter({DataConverter}{(CompareValue(DataConverterIsGeneric, true) ? $"<{Type}>" : "")}.Default!)";
+        public string? DataConverterCode => string.IsNullOrEmpty(DataConverter) ? null : $".SetConverter({DataConverterName}.Default!)";
 
         /// <summary>
         /// Gets the data converter C# code for reference data data access.
         /// </summary>
-        public string? RefDataConverterCode => string.IsNullOrEmpty(DataConverter) ? null : $"{DataConverter}{(CompareValue(DataConverterIsGeneric, true) ? $"<{Type}>" : "")}.Default.ConvertToSrce(";
+        public string? RefDataConverterCode => string.IsNullOrEmpty(DataConverter) ? null : $"{DataConverterName}.Default.ConvertToSrce(";
 
         /// <summary>
         /// Gets the WebAPI parameter type.
@@ -653,7 +662,7 @@ properties: [
             DataModelJsonName = DefaultWhereNull(DataModelJsonName, () => JsonName);
             DataOperationTypes = DefaultWhereNull(DataOperationTypes, () => "Any");
             IsEntity = DefaultWhereNull(IsEntity, () => (Type == "ChangeLog" || Parent!.Parent!.Entities!.Any(x => x.Name == Type)) && RefDataType == null);
-            Immutable = DefaultWhereNull(Immutable, () => false);
+            Immutable = DefaultWhereNull(Immutable, () => RefDataMapping.HasValue && RefDataMapping.Value == true);
             BubblePropertyChanged = DefaultWhereNull(BubblePropertyChanged, () => CompareValue(IsEntity, true));
 
             DataConverter = DefaultWhereNull(DataConverter, () => string.IsNullOrEmpty(RefDataType) ? null : Root!.RefDataDefaultMapperConverter);
@@ -675,6 +684,10 @@ properties: [
                     IdentifierGeneratorName = pc.Name;
                 }
             }
+
+            EntityFrameworkMapper = DefaultWhereNull(EntityFrameworkMapper, () => "Map");
+            CosmosMapper = DefaultWhereNull(CosmosMapper, () => "Map");
+            ODataMapper = DefaultWhereNull(ODataMapper, () => "Map");
 
             GrpcType = DefaultWhereNull(GrpcType, () => InferGrpcType(string.IsNullOrEmpty(RefDataType) ? Type! : RefDataType!, RefDataType, RefDataList, DateTimeTransform));
             GrpcMapper = SystemTypes.Contains(Type) || RefDataType != null ? null : Type;

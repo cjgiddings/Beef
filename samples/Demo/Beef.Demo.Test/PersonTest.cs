@@ -118,6 +118,25 @@ namespace Beef.Demo.Test
                     new WorkHistory { Name = "Google", StartDate = new DateTime(1992, 12, 31) } } }, 1.ToGuid()));
         }
 
+        [Test, TestSetUp]
+        public void A170_Validation_Metadata()
+        {
+            AgentTester.Test<PersonAgent, Person>()
+                .ExpectStatusCode(HttpStatusCode.BadRequest)
+                .ExpectErrorType(ErrorType.ValidationError)
+                .ExpectMessages(
+                    "Gender is invalid.",
+                    "Description must not exceed 10 characters in length.")
+                .Run(a => a.CreateAsync(new Person
+                {
+                    FirstName = "Barry",
+                    LastName = "Smith",
+                    Birthday = DateTime.Now.AddDays(-5000),
+                    Gender = "M",
+                    Metadata = new Dictionary<string, string> { { "X", "abc" }, { "F", "abcdefghijklmnop" } }
+                }));
+        }
+
         #endregion
 
         #region Get/GetDetail
@@ -138,7 +157,7 @@ namespace Beef.Demo.Test
                 .ExpectStatusCode(HttpStatusCode.OK)
                 .IgnoreChangeLog()
                 .IgnoreETag()
-                .ExpectValue((t) => new Person { Id = 1.ToGuid(), FirstName = "Wendy", LastName = "Jones", GenderSid = "F", UniqueCode = "A1234", Birthday = new DateTime(1985, 03, 18), Metadata = new Dictionary<string, string> { { "Key", "Value" } } })
+                .ExpectValue((t) => new Person { Id = 1.ToGuid(), FirstName = "Wendy", LastName = "Jones", GenderSid = "F", UniqueCode = "A1234", Birthday = new DateTime(1985, 03, 18), Metadata = new Dictionary<string, string> { { "F", "Value" } } })
                 .Run(a => a.GetAsync(1.ToGuid()));
         }
 
@@ -198,7 +217,7 @@ namespace Beef.Demo.Test
                 .ExpectStatusCode(HttpStatusCode.OK)
                 .IgnoreChangeLog()
                 .IgnoreETag()
-                .ExpectValue((t) => new PersonDetail { Id = 1.ToGuid(), FirstName = "Wendy", LastName = "Jones", GenderSid = "F", UniqueCode = "A1234", Birthday = new DateTime(1985, 03, 18), Metadata = new Dictionary<string, string> { { "Key", "Value" } } })
+                .ExpectValue((t) => new PersonDetail { Id = 1.ToGuid(), FirstName = "Wendy", LastName = "Jones", GenderSid = "F", UniqueCode = "A1234", Birthday = new DateTime(1985, 03, 18), Metadata = new Dictionary<string, string> { { "F", "Value" } } })
                 .Run(a => a.GetDetailAsync(1.ToGuid()));
         }
 
@@ -243,7 +262,7 @@ namespace Beef.Demo.Test
                 .ExpectStatusCode(HttpStatusCode.OK)
                 .IgnoreChangeLog()
                 .IgnoreETag()
-                .ExpectValue((t) => new Person { Id = 1.ToGuid(), FirstName = "Wendy", LastName = "Jones", GenderSid = "F", UniqueCode = "A1234", Birthday = new DateTime(1985, 03, 18), Metadata = new Dictionary<string, string> { { "Key", "Value" } } })
+                .ExpectValue((t) => new Person { Id = 1.ToGuid(), FirstName = "Wendy", LastName = "Jones", GenderSid = "F", UniqueCode = "A1234", Birthday = new DateTime(1985, 03, 18), Metadata = new Dictionary<string, string> { { "F", "Value" } } })
                 .Run(a => a.GetWithEfAsync(1.ToGuid()));
         }
 
@@ -423,7 +442,7 @@ namespace Beef.Demo.Test
                 GenderSid = "M",
                 Birthday = new DateTime(1955, 10, 28),
                 UniqueCode = "B7890",
-                Metadata = new Dictionary<string, string> { { "Key", "Value" } }
+                Metadata = new Dictionary<string, string> { { "F", "Value" } }
             };
 
             // Create a person.
@@ -480,6 +499,35 @@ namespace Beef.Demo.Test
                 .ExpectErrorType(ErrorType.ValidationError)
                 .ExpectMessages("Gender is invalid.")
                 .Run(a => a.CreateAsync(p));
+        }
+
+        [Test, TestSetUp]
+        public void E130_Create_Galileo()
+        {
+            var p = new Person
+            {
+                FirstName = "Galileo",
+                LastName = "Galilei",
+                GenderSid = "M",
+                Birthday = new DateTime(1564, 02, 15), //Date that is before the min value of SQL DateTime. Birthday is SQL Date
+                UniqueCode = "C789"
+            };
+
+            // Create a person.
+            p = AgentTester.Test<PersonAgent, Person>()
+                .ExpectStatusCode(HttpStatusCode.Created)
+                .ExpectChangeLogCreated()
+                .ExpectETag()
+                .ExpectUniqueKey()
+                .ExpectEvent("Demo.Person.*", "Create")
+                .ExpectValue((t) => p)
+                .Run(a => a.CreateAsync(p)).Value;
+
+            // Check the person was created properly.
+            AgentTester.Test<PersonAgent, Person>()
+                .ExpectStatusCode(HttpStatusCode.OK)
+                .ExpectValue((t) => p)
+                .Run(a => a.GetAsync(p.Id));
         }
 
         [Test, TestSetUp]
@@ -917,7 +965,7 @@ namespace Beef.Demo.Test
 
             p.FirstName = "Barry";
             p.Address = new Address { Street = "Simpsons Road", City = "Bardon" };
-            p.Metadata = new Dictionary<string, string> { { "PKEY", "PVAL" } };
+            p.Metadata = new Dictionary<string, string> { { "M", "MVAL" } };
 
             // Try patching the person with an invalid eTag.
             p = AgentTester.Test<PersonAgent, Person>()
@@ -926,7 +974,7 @@ namespace Beef.Demo.Test
                 .ExpectChangeLogUpdated()
                 .ExpectValue(_ => p)
                 .Run(a => a.PatchAsync(WebApiPatchOption.MergePatch,
-                    JToken.Parse("{ \"firstName\": \"Barry\", \"address\": { \"street\": \"Simpsons Road\", \"city\": \"Bardon\" }, \"metadata\": { \"PKEY\": \"PVAL\" } }"),
+                    JToken.Parse("{ \"firstName\": \"Barry\", \"address\": { \"street\": \"Simpsons Road\", \"city\": \"Bardon\" }, \"metadata\": { \"M\": \"MVAL\" } }"),
                     3.ToGuid(), new WebApiRequestOptions { ETag = p.ETag })).Value;
 
             // Check the person was patched properly.
@@ -1152,6 +1200,26 @@ namespace Beef.Demo.Test
                     .Run(a => a.EventPublishNoSendAsync(new Person { FirstName = "John", LastName = "Doe", GenderSid = "M", Birthday = new DateTime(200, 01, 01) })));
 
             Assert.Pass("Expected Publish/Send mismatch.");
+        }
+
+        [Test, TestSetUp]
+        public void I410_ParamColl_Error()
+        {
+            AgentTester.Test<PersonAgent>()
+                .ExpectStatusCode(HttpStatusCode.BadRequest)
+                .ExpectMessages(
+                     "Addresses must not exceed 2 item(s).",
+                     "Street is required.")
+                .Run(a => a.ParamCollAsync(new AddressCollection { new Address { Street = "Aaa", City = "Bbb" }, new Address { Street = "Ccc", City = "Ddd" }, new Address { City = "Xxx" } }));
+        }
+
+        [Test, TestSetUp]
+        public void I410_ParamColl_Duplicate()
+        {
+            AgentTester.Test<PersonAgent>()
+                .ExpectStatusCode(HttpStatusCode.BadRequest)
+                .ExpectMessages("Addresses contains duplicates; Street value 'Aaa' specified more than once.")
+                .Run(a => a.ParamCollAsync(new AddressCollection { new Address { Street = "Aaa", City = "Bbb" }, new Address { Street = "Aaa", City = "Ddd" }}));
         }
 
         #endregion

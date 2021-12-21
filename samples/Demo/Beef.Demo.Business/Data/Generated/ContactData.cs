@@ -28,17 +28,19 @@ namespace Beef.Demo.Business.Data
     public partial class ContactData : IContactData
     {
         private readonly IEfDb _ef;
+        private readonly AutoMapper.IMapper _mapper;
         private readonly IEventPublisher _evtPub;
 
-        private Func<IQueryable<EfModel.Contact>, IEfDbArgs, IQueryable<EfModel.Contact>>? _getAllOnQuery;
+        private Func<IQueryable<EfModel.Contact>, EfDbArgs, IQueryable<EfModel.Contact>>? _getAllOnQuery;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContactData"/> class.
         /// </summary>
         /// <param name="ef">The <see cref="IEfDb"/>.</param>
+        /// <param name="mapper">The <see cref="AutoMapper.IMapper"/>.</param>
         /// <param name="evtPub">The <see cref="IEventPublisher"/>.</param>
-        public ContactData(IEfDb ef, IEventPublisher evtPub)
-            { _ef = Check.NotNull(ef, nameof(ef)); _evtPub = Check.NotNull(evtPub, nameof(evtPub)); ContactDataCtor(); }
+        public ContactData(IEfDb ef, AutoMapper.IMapper mapper, IEventPublisher evtPub)
+            { _ef = Check.NotNull(ef, nameof(ef)); _mapper = Check.NotNull(mapper, nameof(mapper)); _evtPub = Check.NotNull(evtPub, nameof(evtPub)); ContactDataCtor(); }
 
         partial void ContactDataCtor(); // Enables additional functionality to be added to the constructor.
 
@@ -46,103 +48,95 @@ namespace Beef.Demo.Business.Data
         /// Gets the <see cref="ContactCollectionResult"/> that contains the items that match the selection criteria.
         /// </summary>
         /// <returns>The <see cref="ContactCollectionResult"/>.</returns>
-        public Task<ContactCollectionResult> GetAllAsync()
+        public Task<ContactCollectionResult> GetAllAsync() => DataInvoker.Current.InvokeAsync(this, async () =>
         {
-            return DataInvoker.Current.InvokeAsync(this, async () =>
-            {
-                ContactCollectionResult __result = new ContactCollectionResult();
-                var __dataArgs = EfMapper.Default.CreateArgs();
-                __result.Result = _ef.Query(__dataArgs, q => _getAllOnQuery?.Invoke(q, __dataArgs) ?? q).SelectQuery<ContactCollection>();
-                return await Task.FromResult(__result).ConfigureAwait(false);
-            });
-        }
+            ContactCollectionResult __result = new ContactCollectionResult();
+            var __dataArgs = EfDbArgs.Create(_mapper);
+            __result.Result = _ef.Query<Contact, EfModel.Contact>(__dataArgs, q => _getAllOnQuery?.Invoke(q, __dataArgs) ?? q).SelectQuery<ContactCollection>();
+            return await Task.FromResult(__result).ConfigureAwait(false);
+        });
 
         /// <summary>
         /// Gets the specified <see cref="Contact"/>.
         /// </summary>
         /// <param name="id">The <see cref="Contact"/> identifier.</param>
         /// <returns>The selected <see cref="Contact"/> where found.</returns>
-        public Task<Contact?> GetAsync(Guid id)
+        public Task<Contact?> GetAsync(Guid id) => DataInvoker.Current.InvokeAsync(this, async () =>
         {
-            return DataInvoker.Current.InvokeAsync(this, async () =>
-            {
-                var __dataArgs = EfMapper.Default.CreateArgs();
-                return await _ef.GetAsync(__dataArgs, id).ConfigureAwait(false);
-            });
-        }
+            var __dataArgs = EfDbArgs.Create(_mapper);
+            return await _ef.GetAsync<Contact, EfModel.Contact>(__dataArgs, id).ConfigureAwait(false);
+        });
 
         /// <summary>
         /// Creates a new <see cref="Contact"/>.
         /// </summary>
         /// <param name="value">The <see cref="Contact"/>.</param>
         /// <returns>The created <see cref="Contact"/>.</returns>
-        public Task<Contact> CreateAsync(Contact value)
+        public Task<Contact> CreateAsync(Contact value) => _ef.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _ef.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __dataArgs = EfMapper.Default.CreateArgs();
-                var __result = await _ef.CreateAsync(__dataArgs, Check.NotNull(value, nameof(value))).ConfigureAwait(false);
-                _evtPub.PublishValue(__result, new Uri($"/contact/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"Demo.Contact.{_evtPub.FormatKey(__result)}", "Create");
-                return __result;
-            });
-        }
+            var __dataArgs = EfDbArgs.Create(_mapper);
+            var __result = await _ef.CreateAsync<Contact, EfModel.Contact>(__dataArgs, Check.NotNull(value, nameof(value))).ConfigureAwait(false);
+            _evtPub.PublishValue(__result, new Uri($"/contact/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"Demo.Contact.{_evtPub.FormatKey(__result)}", "Create");
+            return __result;
+        });
 
         /// <summary>
         /// Updates an existing <see cref="Contact"/>.
         /// </summary>
         /// <param name="value">The <see cref="Contact"/>.</param>
         /// <returns>The updated <see cref="Contact"/>.</returns>
-        public Task<Contact> UpdateAsync(Contact value)
+        public Task<Contact> UpdateAsync(Contact value) => _ef.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _ef.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __dataArgs = EfMapper.Default.CreateArgs();
-                var __result = await _ef.UpdateAsync(__dataArgs, Check.NotNull(value, nameof(value))).ConfigureAwait(false);
-                _evtPub.PublishValue(__result, new Uri($"/contact/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"Demo.Contact.{_evtPub.FormatKey(__result)}", "Update");
-                return __result;
-            });
-        }
+            var __dataArgs = EfDbArgs.Create(_mapper);
+            var __result = await _ef.UpdateAsync<Contact, EfModel.Contact>(__dataArgs, Check.NotNull(value, nameof(value))).ConfigureAwait(false);
+            _evtPub.PublishValue(__result, new Uri($"/contact/{_evtPub.FormatKey(__result)}", UriKind.Relative), $"Demo.Contact.{_evtPub.FormatKey(__result)}", "Update");
+            return __result;
+        });
 
         /// <summary>
         /// Deletes the specified <see cref="Contact"/>.
         /// </summary>
         /// <param name="id">The <see cref="Contact"/> identifier.</param>
-        public Task DeleteAsync(Guid id)
+        public Task DeleteAsync(Guid id) => _ef.EventOutboxInvoker.InvokeAsync(this, async () =>
         {
-            return _ef.EventOutboxInvoker.InvokeAsync(this, async () =>
-            {
-                var __dataArgs = EfMapper.Default.CreateArgs();
-                await _ef.DeleteAsync(__dataArgs, id).ConfigureAwait(false);
-                _evtPub.PublishValue(new Contact { Id = id }, new Uri($"/contact/{_evtPub.FormatKey(id)}", UriKind.Relative), $"Demo.Contact.{_evtPub.FormatKey(id)}", "Delete", id);
-            });
-        }
+            var __dataArgs = EfDbArgs.Create(_mapper);
+            await _ef.DeleteAsync<Contact, EfModel.Contact>(__dataArgs, id).ConfigureAwait(false);
+            _evtPub.PublishValue(new Contact { Id = id }, new Uri($"/contact/{_evtPub.FormatKey(id)}", UriKind.Relative), $"Demo.Contact.{_evtPub.FormatKey(id)}", "Delete", id);
+        });
 
         /// <summary>
         /// Raise Event.
         /// </summary>
         /// <param name="throwError">Indicates whether throw a DivideByZero exception.</param>
-        public Task RaiseEventAsync(bool throwError)
-            => _ef.EventOutboxInvoker.InvokeAsync(this, () => RaiseEventOnImplementationAsync(throwError));
+        public Task RaiseEventAsync(bool throwError) => _ef.EventOutboxInvoker.InvokeAsync(this, () => RaiseEventOnImplementationAsync(throwError));
 
         /// <summary>
-        /// Provides the <see cref="Contact"/> and Entity Framework <see cref="EfModel.Contact"/> property mapping.
+        /// Provides the <see cref="Contact"/> and Entity Framework <see cref="EfModel.Contact"/> <i>AutoMapper</i> mapping.
         /// </summary>
-        public partial class EfMapper : EfDbMapper<Contact, EfModel.Contact, EfMapper>
+        public partial class EfMapperProfile : AutoMapper.Profile
         {
             /// <summary>
-            /// Initializes a new instance of the <see cref="EfMapper"/> class.
+            /// Initializes a new instance of the <see cref="EfMapperProfile"/> class.
             /// </summary>
-            public EfMapper()
+            public EfMapperProfile()
             {
-                Property(s => s.Id, d => d.ContactId).SetUniqueKey(true);
-                Property(s => s.FirstName, d => d.FirstName);
-                Property(s => s.LastName, d => d.LastName);
-                Property(s => s.StatusSid, d => d.StatusCode);
-                AddStandardProperties();
-                EfMapperCtor();
+                var s2d = CreateMap<Contact, EfModel.Contact>();
+                s2d.ForMember(d => d.ContactId, o => o.MapFrom(s => s.Id));
+                s2d.ForMember(d => d.FirstName, o => o.MapFrom(s => s.FirstName));
+                s2d.ForMember(d => d.LastName, o => o.MapFrom(s => s.LastName));
+                s2d.ForMember(d => d.StatusCode, o => o.MapFrom(s => s.StatusSid));
+
+                var d2s = CreateMap<EfModel.Contact, Contact>();
+                d2s.ForMember(s => s.Id, o => o.MapFrom(d => d.ContactId));
+                d2s.ForMember(s => s.FirstName, o => o.MapFrom(d => d.FirstName));
+                d2s.ForMember(s => s.LastName, o => o.MapFrom(d => d.LastName));
+                d2s.ForMember(s => s.StatusSid, o => o.MapFrom(d => d.StatusCode));
+                d2s.ForMember(s => s.InternalCode, o => o.Ignore());
+
+                EfMapperProfileCtor(s2d, d2s);
             }
-            
-            partial void EfMapperCtor(); // Enables the EfMapper constructor to be extended.
+
+            partial void EfMapperProfileCtor(AutoMapper.IMappingExpression<Contact, EfModel.Contact> s2d, AutoMapper.IMappingExpression<EfModel.Contact, Contact> d2s); // Enables the constructor to be extended.
         }
     }
 }

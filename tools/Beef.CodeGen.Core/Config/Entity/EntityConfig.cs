@@ -43,6 +43,7 @@ entities:
     [CategorySchema("EntityFramework", Title = "Provides the specific _Entity Framework (EF)_ configuration where `AutoImplement` is `EntityFramework`.")]
     [CategorySchema("Cosmos", Title = "Provides the specific _Cosmos_ configuration where `AutoImplement` is `Cosmos`.")]
     [CategorySchema("OData", Title = "Provides the specific _OData_ configuration where `AutoImplement` is `OData`.")]
+    [CategorySchema("HttpAgent", Title = "Provides the specific _HTTP Agent_ configuration where `AutoImplement` is `HttpAgent`.")]
     [CategorySchema("Model", Title = "Provides the data _Model_ configuration.")]
     [CategorySchema("gRPC", Title = "Provides the _gRPC_ configuration.")]
     [CategorySchema("Exclude", Title = "Provides the _Exclude_ configuration.")]
@@ -117,7 +118,7 @@ entities:
         /// Gets or sets the Const Type option.
         /// </summary>
         [JsonProperty("constType", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Key", Title = "The Const .NET Type option.", Options = new string[] { "int", "Guid", "string" },
+        [PropertySchema("Key", Title = "The Const .NET Type option.", Options = new string[] { "int", "long", "Guid", "string" },
             Description = "The .NET Type to be used for the `const` values. Defaults to `string`.")]
         public string? ConstType { get; set; }
 
@@ -137,7 +138,7 @@ entities:
         /// Gets or sets the Reference Data identifier Type option.
         /// </summary>
         [JsonProperty("refDataType", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("RefData", Title = "The Reference Data identifier Type option.", IsImportant = true, Options = new string[] { "int", "Guid", "string" },
+        [PropertySchema("RefData", Title = "The Reference Data identifier Type option.", IsImportant = true, Options = new string[] { "int", "long", "Guid", "string" },
             Description = "Required to identify an entity as being Reference Data. Specifies the underlying .NET Type used for the Reference Data identifier.")]
         public string? RefDataType { get; set; }
 
@@ -174,7 +175,7 @@ entities:
         /// </summary>
         [JsonProperty("inherits", DefaultValueHandling = DefaultValueHandling.Ignore)]
         [PropertySchema("Entity", Title = "The base class that the entity inherits from.",
-            Description = "Defaults to `EntityBase` for a standard entity. For Reference Data it will default to `ReferenceDataBaseInt` or `ReferenceDataBaseGuid` depending on the corresponding `RefDataType` value. " +
+            Description = "Defaults to `EntityBase` for a standard entity. For Reference Data it will default to `ReferenceDataBaseXxx` depending on the corresponding `RefDataType` value. " +
                           "See `OmitEntityBase` if the desired outcome is to not inherit from any of the aforementioned base classes.")]
         public string? Inherits { get; set; }
 
@@ -190,7 +191,7 @@ entities:
         /// </summary>
         [JsonProperty("implementsAutoInfer", DefaultValueHandling = DefaultValueHandling.Ignore)]
         [PropertySchema("Entity", Title = "Indicates whether to automatically infer the interface implements for the entity from the properties declared.",
-            Description = "Will attempt to infer the following: `IGuidIdentifier`, `IIntIdentifier`, `IStringIdentifier`, `IETag` and `IChangeLog`. Defaults to `true`.")]
+            Description = "Will attempt to infer the following: `IGuidIdentifier`, `IInt32Identifier`, `IInt64Identifier`, `IStringIdentifier`, `IETag` and `IChangeLog`. Defaults to `true`.")]
         public bool? ImplementsAutoInfer { get; set; }
 
         /// <summary>
@@ -327,18 +328,10 @@ entities:
         /// Gets or sets the data source auto-implementation option. 
         /// </summary>
         [JsonProperty("autoImplement", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Data", Title = "The data source auto-implementation option.", IsImportant = true, Options = new string[] { "Database", "EntityFramework", "Cosmos", "OData", "None" },
+        [PropertySchema("Data", Title = "The data source auto-implementation option.", IsImportant = true, Options = new string[] { "Database", "EntityFramework", "Cosmos", "OData", "HttpAgent", "None" },
             Description = "Defaults to `None`. Indicates that the implementation for the underlying `Operations` will be auto-implemented using the selected data source (unless explicity overridden). When selected some of the related attributes will also be required (as documented). " +
                           "Additionally, the `AutoImplement` indicator must be selected for each underlying `Operation` that is to be auto-implemented.")]
         public string? AutoImplement { get; set; }
-
-        /// <summary>
-        /// Indicates that the `AddStandardProperties` method call is to be included for the generated (corresponding) `Mapper`.
-        /// </summary>
-        [JsonProperty("mapperAddStandardProperties", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Data", Title = "Indicates that the `AddStandardProperties` method call is to be included for the generated (corresponding) `Mapper`.",
-            Description = "Defaults to `true`.")]
-        public bool? MapperAddStandardProperties { get; set; }
 
         /// <summary>
         /// Gets or sets the access modifier for the generated `Data` constructor.
@@ -535,6 +528,42 @@ entities:
 
         #endregion
 
+        #region HttpAgent
+
+        /// <summary>
+        /// Gets or sets the default .NET HTTP Agent interface name used where `Operation.AutoImplement` is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentName", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The .NET HTTP Agent interface name used where `Operation.AutoImplement` is `HttpAgent`.", IsImportant = true,
+            Description = "Defaults to `CodeGeneration.HttpAgentName` configuration property (its default value is `IHttpAgent`).")]
+        public string? HttpAgentName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the HttpAgent API route prefix where `Operation.AutoImplement` is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentRoutePrefix", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The base HTTP Agent API route where `Operation.AutoImplement` is `HttpAgent`.",
+            Description = "This is the base (prefix) `URI` for the HTTP Agent endpoint and can be further extended when defining the underlying `Operation`(s).")]
+        public string? HttpAgentRoutePrefix { get; set; }
+
+        /// <summary>
+        /// Gets or sets the corresponding HTTP Agent model name required where <see cref="AutoImplement"/> is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentModel", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`).", IsImportant = true,
+            Description = "This can be overridden within the `Operation`(s).")]
+        public string? HttpAgentModel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the corresponding HTTP Agent model name required where <see cref="AutoImplement"/> is `HttpAgent`.
+        /// </summary>
+        [JsonProperty("httpAgentReturnModel", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [PropertySchema("HttpAgent", Title = "The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`).",
+            Description = "This can be overridden within the `Operation`(s).")]
+        public string? HttpAgentReturnModel { get; set; }
+
+        #endregion 
+
         #region DataSvc
 
         /// <summary>
@@ -671,7 +700,7 @@ entities:
         /// </summary>
         [JsonProperty("webApiRoutePrefix", DefaultValueHandling = DefaultValueHandling.Ignore)]
         [PropertySchema("WebApi", Title = "The `RoutePrefixAtttribute` for the corresponding entity Web API controller.", IsImportant = true,
-            Description = "This is the base (prefix) `URI` for the entity and can be further extended when defining the underlying `Operation`(s).")]
+            Description = "This is the base (prefix) `URI` for the entity and can be further extended when defining the underlying `Operation`(s). The `CodeGeneration.WebApiRoutePrefix` will be prepended where specified.")]
         public string? WebApiRoutePrefix { get; set; }
 
         /// <summary>
@@ -724,83 +753,83 @@ entities:
         #region Exclude
 
         /// <summary>
-        /// The option to exclude the generation of the <c>Entity</c> class (<c>Xxx.cs</c>).
+        /// Indicates whether to exclude the generation of the <c>Entity</c> class (<c>Xxx.cs</c>).
         /// </summary>
         [JsonProperty("excludeEntity", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `Entity` class (`Xxx.cs`).", IsImportant = true, Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeEntity { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the `Entity` class (`Xxx.cs`).", IsImportant = true)]
+        public bool? ExcludeEntity { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of <b>all</b> <c>Operation</c> related code; excluding the <c>Entity</c> class.
+        /// Indicates whether to exclude the generation of <b>all</b> <c>Operation</c> related code; excluding the <c>Entity</c> class.
         /// </summary>
         [JsonProperty("excludeAll", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of all `Operation` related artefacts; excluding the `Entity` class.", IsImportant = true, Options = new string[] { NoOption, YesOption },
-            Description = "Is a shorthand means for setting all of the other `Exclude*` properties (with the exception of `ExcludeEntity`) to `Yes`.")]
-        public string? ExcludeAll { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of all `Operation` related artefacts; excluding the `Entity` class.", IsImportant = true,
+            Description = "Is a shorthand means for setting all of the other `Exclude*` properties (with the exception of `ExcludeEntity`) to exclude.")]
+        public bool? ExcludeAll { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the <c>Data</c> interface (<c>IXxxData.cs</c>).
+        /// Indicates whether to exclude the generation of the <c>Data</c> interface (<c>IXxxData.cs</c>).
         /// </summary>
         [JsonProperty("excludeIData", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `Data` interface (`IXxxData.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeIData { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the `Data` interface (`IXxxData.cs`).")]
+        public bool? ExcludeIData { get; set; }
 
         /// <summary>
         /// Gets or sets the option to exclude the generation of the <c>Data</c> class (<c>XxxData.cs</c>).
         /// </summary>
         [JsonProperty("excludeData", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `Data` class (`XxxData.cs`).", Options = new string[] { NoOption, YesOption, "RequiresMapper" },
-            Description = "Defaults to `No` indicating _not_ to exlude. A value of `Yes` indicates to exclude all output; alternatively, `RequiresMapper` indicates to at least output the corresponding `Mapper` class.")]
+        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `Data` class (`XxxData.cs`).", Options = new string[] { "Include", "Exclude", "RequiresMapper" },
+            Description = "Defaults to `Include` indicating _not_ to exlude. A value of `Exclude` indicates to exclude all output; alternatively, `RequiresMapper` indicates to at least output the corresponding `Mapper` class.")]
         public string? ExcludeData { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the <c>DataSvc</c> interface (<c>IXxxDataSvc.cs</c>).
+        /// Indicates whether to exclude the generation of the <c>DataSvc</c> interface (<c>IXxxDataSvc.cs</c>).
         /// </summary>
         [JsonProperty("excludeIDataSvc", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `DataSvc` interface (`IXxxDataSvc.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeIDataSvc { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the `DataSvc` interface (`IXxxDataSvc.cs`).")]
+        public bool? ExcludeIDataSvc { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the <c>DataSvc</c> class (<c>XxxDataSvc.cs</c>).
+        /// Indicates whether to exclude the generation of the <c>DataSvc</c> class (<c>XxxDataSvc.cs</c>).
         /// </summary>
         [JsonProperty("excludeDataSvc", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `DataSvc` class (`XxxDataSvc.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeDataSvc { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the `DataSvc` class (`XxxDataSvc.cs`).")]
+        public bool? ExcludeDataSvc { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the <c>Manager</c> interface (<c>IXxxManager.cs</c>).
+        /// Indicates whether to exclude the generation of the <c>Manager</c> interface (<c>IXxxManager.cs</c>).
         /// </summary>
         [JsonProperty("excludeIManager", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `Manager` interface (`IXxxManager.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeIManager { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the `Manager` interface (`IXxxManager.cs`).")]
+        public bool? ExcludeIManager { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the <c>Manager</c> class (<c>XxxManager.cs</c>).
+        /// Indicates whether to exclude the generation of the <c>Manager</c> class (<c>XxxManager.cs</c>).
         /// </summary>
         [JsonProperty("excludeManager", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the `Manager` class (`XxxManager.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeManager { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the `Manager` class (`XxxManager.cs`).")]
+        public bool? ExcludeManager { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the WebAPI <c>Controller</c> class (<c>XxxController.cs</c>).
+        /// Indicates whether to exclude the generation of the WebAPI <c>Controller</c> class (<c>XxxController.cs</c>).
         /// </summary>
         [JsonProperty("excludeWebApi", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the WebAPI `Controller` class (`XxxController.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeWebApi { get; set; }
+        [PropertySchema("Exclude", Title = "The option to exclude the generation of the WebAPI `Controller` class (`XxxController.cs`).")]
+        public bool? ExcludeWebApi { get; set; }
 
         /// <summary>
         /// The option to exclude the generation of the WebAPI <c>Agent</c> class (<c>XxxAgent.cs</c>).
         /// </summary>
         [JsonProperty("excludeWebApiAgent", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the WebAPI consuming `Agent` class (`XxxAgent.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeWebApiAgent { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the WebAPI consuming `Agent` class (`XxxAgent.cs`).")]
+        public bool? ExcludeWebApiAgent { get; set; }
 
         /// <summary>
-        /// The option to exclude the generation of the gRPC <c>Agent</c> class (<c>XxxAgent.cs</c>).
+        /// Indicates whether to exclude the generation of the gRPC <c>Agent</c> class (<c>XxxAgent.cs</c>).
         /// </summary>
         [JsonProperty("excludeGrpcAgent", DefaultValueHandling = DefaultValueHandling.Ignore)]
-        [PropertySchema("Exclude", Title = "The option to exclude the generation of the gRPC consuming `Agent` class (`XxxAgent.cs`).", Options = new string[] { NoOption, YesOption })]
-        public string? ExcludeGrpcAgent { get; set; }
+        [PropertySchema("Exclude", Title = "Indicates whether to exclude the generation of the gRPC consuming `Agent` class (`XxxAgent.cs`).")]
+        public bool? ExcludeGrpcAgent { get; set; }
 
         #endregion
 
@@ -872,17 +901,47 @@ entities:
         /// <summary>
         /// Gets the list of properties that are to be used for entity framework mapping.
         /// </summary>
-        public List<PropertyConfig>? EntityFrameworkMapperProperties => Properties!.Where(x => CompareNullOrValue(x.EntityFrameworkIgnore, false) && x.Name != "ETag" && x.Name != "ChangeLog").ToList();
+        public List<PropertyConfig>? EntityFrameworkMapperProperties => Properties!.Where(x => CompareValue(x.EntityFrameworkMapper, "Map") && x.Name != "ETag" && x.Name != "ChangeLog").ToList();
 
         /// <summary>
         /// Gets the list of properties that are to be used for entity framework mapping.
         /// </summary>
-        public List<PropertyConfig>? CosmosMapperProperties => Properties!.Where(x => CompareNullOrValue(x.CosmosIgnore, false) && x.Name != "ETag" && x.Name != "ChangeLog").ToList();
+        public List<PropertyConfig>? EntityFrameworkAutoMapperProperties => Properties!.Where(x => !CompareValue(x.EntityFrameworkMapper, "Skip") && x.Name != "ETag" && x.Name != "ChangeLog").ToList();
 
         /// <summary>
         /// Gets the list of properties that are to be used for entity framework mapping.
         /// </summary>
-        public List<PropertyConfig>? ODataMapperProperties => Properties!.Where(x => CompareNullOrValue(x.ODataIgnore, false) && x.Name != "ETag" && x.Name != "ChangeLog").ToList();
+        public List<PropertyConfig>? CosmosMapperProperties => Properties!.Where(x => CompareValue(x.CosmosMapper, "Map") && x.Name != "ETag" && x.Name != "ChangeLog").ToList();
+
+        /// <summary>
+        /// Gets the list of properties that are to be used for entity framework mapping.
+        /// </summary>
+        public List<PropertyConfig>? CosmosAutoMapperProperties => Properties!.Where(x => !CompareValue(x.CosmosMapper, "Skip")).ToList();
+
+        /// <summary>
+        /// Gets the list of properties that are to be used for entity framework mapping.
+        /// </summary>
+        public List<PropertyConfig>? ODataMapperProperties => Properties!.Where(x => !CompareValue(x.ODataMapper, "Skip")).ToList();
+
+        /// <summary>
+        /// Indicates where there is a <see cref="IChangeLog"/> property.
+        /// </summary>
+        public bool HasDatabaseChangeLogProperty => Properties!.Any(x => x.Name == "ChangeLog" && CompareNullOrValue(x.DatabaseIgnore, false));
+
+        /// <summary>
+        /// Indicates where there is a <see cref="IETag"/> property.
+        /// </summary>
+        public bool HasDatabaseETagProperty => Properties!.Any(x => x.Name == "ETag" && CompareNullOrValue(x.DatabaseIgnore, false));
+
+        /// <summary>
+        /// Indicates where there is a <see cref="IChangeLog"/> property.
+        /// </summary>
+        public bool HasEntityFrameworkChangeLogProperty => Properties!.Any(x => x.Name == "ChangeLog" && !CompareValue(x.EntityFrameworkMapper, "Skip"));
+
+        /// <summary>
+        /// Indicates where there is a <see cref="IETag"/> property.
+        /// </summary>
+        public bool HasEntityFrameworkETagProperty => Properties!.Any(x => x.Name == "ETag" && !CompareValue(x.EntityFrameworkMapper, "Skip"));
 
         /// <summary>
         /// Gets the list of properties that are to be used for gRPC.
@@ -899,32 +958,32 @@ entities:
         /// <summary>
         /// Gets the IEntityManager <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? IManagerOperations => Operations!.Where(x => IsNoOption(x.ExcludeIManager)).ToList();
+        public List<OperationConfig>? IManagerOperations => Operations!.Where(x => IsFalse(x.ExcludeIManager)).ToList();
 
         /// <summary>
         /// Gets the EntityManager <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? ManagerOperations => Operations!.Where(x => IsNoOption(x.ExcludeManager)).ToList();
+        public List<OperationConfig>? ManagerOperations => Operations!.Where(x => IsFalse(x.ExcludeManager)).ToList();
 
         /// <summary>
         /// Gets the EntityManager <see cref="OperationConfig"/> collection where the Manager is not custom.
         /// </summary>
-        public List<OperationConfig>? ManagerAutoOperations => Operations!.Where(x => IsNoOption(x.ExcludeManager) && CompareNullOrValue(x.ManagerCustom, false)).ToList();
+        public List<OperationConfig>? ManagerAutoOperations => Operations!.Where(x => IsFalse(x.ExcludeManager) && CompareNullOrValue(x.ManagerCustom, false)).ToList();
 
         /// <summary>
         /// Gets the IEntityDataSvc <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? IDataSvcOperations => Operations!.Where(x => IsNoOption(x.ExcludeIDataSvc)).ToList();
+        public List<OperationConfig>? IDataSvcOperations => Operations!.Where(x => IsFalse(x.ExcludeIDataSvc)).ToList();
 
         /// <summary>
         /// Gets the EntityDataSvc <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? DataSvcOperations => Operations!.Where(x => IsNoOption(x.ExcludeDataSvc)).ToList();
+        public List<OperationConfig>? DataSvcOperations => Operations!.Where(x => IsFalse(x.ExcludeDataSvc)).ToList();
 
         /// <summary>
         /// Gets the EntityDataSvc <see cref="OperationConfig"/> collection where the DataSvc is not custom.
         /// </summary>
-        public List<OperationConfig>? DataSvcAutoOperations => Operations!.Where(x => IsNoOption(x.ExcludeDataSvc) && CompareNullOrValue(x.DataSvcCustom, false)).ToList();
+        public List<OperationConfig>? DataSvcAutoOperations => Operations!.Where(x => IsFalse(x.ExcludeDataSvc) && CompareNullOrValue(x.DataSvcCustom, false)).ToList();
 
         /// <summary>
         /// Indicates where there are any <see cref="OperationConfig.ManagerExtensions"/>.
@@ -954,12 +1013,12 @@ entities:
         /// <summary>
         /// Gets the IEntityData <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? IDataOperations => Operations!.Where(x => IsNoOption(x.ExcludeIData)).ToList();
+        public List<OperationConfig>? IDataOperations => Operations!.Where(x => IsFalse(x.ExcludeIData)).ToList();
 
         /// <summary>
         /// Gets the IEntityData <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? DataOperations => Operations!.Where(x => IsNoOption(x.ExcludeData)).ToList();
+        public List<OperationConfig>? DataOperations => Operations!.Where(x => IsFalse(x.ExcludeData)).ToList();
 
         /// <summary>
         /// Gets the Grpc <see cref="OperationConfig"/> collection.
@@ -974,12 +1033,12 @@ entities:
         /// <summary>
         /// Gets the EntityController <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? WebApiOperations => Operations!.Where(x => IsNoOption(x.ExcludeWebApi)).ToList();
+        public List<OperationConfig>? WebApiOperations => Operations!.Where(x => IsFalse(x.ExcludeWebApi)).ToList();
 
         /// <summary>
         /// Gets the EntityAgent <see cref="OperationConfig"/> collection.
         /// </summary>
-        public List<OperationConfig>? WebApiAgentOperations => Operations!.Where(x => IsNoOption(x.ExcludeWebApiAgent)).ToList();
+        public List<OperationConfig>? WebApiAgentOperations => Operations!.Where(x => IsFalse(x.ExcludeWebApiAgent)).ToList();
 
         /// <summary>
         /// Gets the WebApi Contructor parameters.
@@ -1016,7 +1075,7 @@ entities:
         /// <summary>
         /// Gets the <see cref="Name"/> formatted as see comments.
         /// </summary>
-        public string? EntityNameSeeComments => IsYesOption(ExcludeEntity) ? $"<b>{Name}</b>" : ToSeeComments(Name);
+        public string? EntityNameSeeComments => IsTrue(ExcludeEntity) ? $"<b>{Name}</b>" : ToSeeComments(Name);
 
         /// <summary>
         /// Gets or sets the computed entity inherits.
@@ -1056,17 +1115,17 @@ entities:
         /// <summary>
         /// Indicates whether at least one operation needs a Manager.
         /// </summary>
-        public bool RequiresManager => !(IsYesOption(ExcludeManager) && IsYesOption(ExcludeIManager));
+        public bool RequiresManager => !(CompareValue(ExcludeManager, true) && CompareValue(ExcludeIManager, true));
 
         /// <summary>
         /// Indicates whether at least one operation needs a DataSvc.
         /// </summary>
-        public bool RequiresDataSvc => !(IsYesOption(ExcludeDataSvc) && IsYesOption(ExcludeIDataSvc)) || Operations.Any(x => CompareNullOrValue(x.ManagerCustom, false));
+        public bool RequiresDataSvc => !(CompareValue(ExcludeDataSvc, true) && CompareValue(ExcludeIDataSvc, true)) || Operations.Any(x => CompareNullOrValue(x.ManagerCustom, false));
 
         /// <summary>
         /// Indicates whether at least one operation needs a Data.
         /// </summary>
-        public bool RequiresData => (CompareValue(ExcludeData, "None") && IsYesOption(ExcludeIData)) || Operations.Any(x => CompareNullOrValue(x.DataSvcCustom, false));
+        public bool RequiresData => (CompareValue(ExcludeData, "Exclude") && CompareValue(ExcludeIData, true)) || Operations.Any(x => CompareNullOrValue(x.DataSvcCustom, false));
 
         /// <summary>
         /// Indicates whether any of the operations will raise an event within the DataSvc-layer. 
@@ -1099,6 +1158,16 @@ entities:
         public bool UsesOData => AutoImplement == "OData" || ODataModel != null || Operations.Any(x => x.AutoImplement == "OData");
 
         /// <summary>
+        /// Indicates whether auto-implementing 'HttpAgent'.
+        /// </summary>
+        public bool UsesHttpAgent => AutoImplement == "HttpAgent" || HttpAgentModel != null || Operations.Any(x => x.AutoImplement == "HttpAgent");
+
+        /// <summary>
+        /// Indicates whether AutoMapper is being used.
+        /// </summary>
+        public bool UsesAutoMapper { get; set; }
+
+        /// <summary>
         /// Indicates whether the data extensions section is required.
         /// </summary>
         public bool DataExtensionsRequired => HasDataExtensions || UsesCosmos || DataOperations.Any(x => x.Type == "GetColl");
@@ -1112,6 +1181,16 @@ entities:
         /// Gets the reference data qualified Entity name.
         /// </summary>
         public string RefDataQualifiedEntityName => string.IsNullOrEmpty(RefDataType) ? Name! : $"{(string.IsNullOrEmpty(Root?.RefDataNamespace) ? "RefDataBusNamespace" : "RefDataNamespace")}.{Name}";
+
+        /// <summary>
+        /// Indicates whether the Manager needs a DataSvc using statement.
+        /// </summary>
+        public bool ManagerNeedsUsingDataSvc => Operations.Any(x => x.ManagerCustom == null || x.ManagerCustom == false);
+
+        /// <summary>
+        /// Indicates whether the DataSvc needs a DataSvc using statement.
+        /// </summary>
+        public bool DataSvcNeedsUsingData => Operations.Any(x => x.DataSvcCustom == null || x.DataSvcCustom == false);
 
         /// <summary>
         /// <inheritdoc/>
@@ -1131,7 +1210,6 @@ entities:
             RefDataSortOrder = DefaultWhereNull(RefDataSortOrder, () => "SortOrder");
             ImplementsAutoInfer = DefaultWhereNull(ImplementsAutoInfer, () => true);
             JsonSerializer = DefaultWhereNull(JsonSerializer, () => Parent!.JsonSerializer);
-            MapperAddStandardProperties = DefaultWhereNull(MapperAddStandardProperties, () => true);
             AutoImplement = DefaultWhereNull(AutoImplement, () => "None");
             DataCtor = DefaultWhereNull(DataCtor, () => "Public");
             DatabaseName = InterfaceiseName(DefaultWhereNull(DatabaseName, () => Parent!.DatabaseName));
@@ -1140,6 +1218,7 @@ entities:
             CosmosName = InterfaceiseName(DefaultWhereNull(CosmosName, () => Parent!.CosmosName));
             CosmosPartitionKey = DefaultWhereNull(CosmosPartitionKey, () => "PartitionKey.None");
             ODataName = InterfaceiseName(DefaultWhereNull(ODataName, () => Parent!.ODataName));
+            HttpAgentName = InterfaceiseName(DefaultWhereNull(HttpAgentName, () => Parent!.HttpAgentName));
             DataSvcCaching = DefaultWhereNull(DataSvcCaching, () => true);
             DataSvcCtor = DefaultWhereNull(DataSvcCtor, () => "Public");
             EventSubjectFormat = DefaultWhereNull(EventSubjectFormat, () => Parent!.EventSubjectFormat);
@@ -1151,16 +1230,10 @@ entities:
             WebApiAuthorize = DefaultWhereNull(WebApiAuthorize, () => Parent!.WebApiAuthorize);
             WebApiCtor = DefaultWhereNull(WebApiCtor, () => "Public");
             WebApiAutoLocation = DefaultWhereNull(WebApiAutoLocation, () => Parent!.WebApiAutoLocation);
-            ExcludeEntity = DefaultWhereNull(ExcludeEntity, () => NoOption);
-            ExcludeIData = DefaultWhereNull(ExcludeIData, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeData = DefaultWhereNull(ExcludeData, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeIDataSvc = DefaultWhereNull(ExcludeIDataSvc, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeDataSvc = DefaultWhereNull(ExcludeDataSvc, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeIManager = DefaultWhereNull(ExcludeIManager, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeManager = DefaultWhereNull(ExcludeManager, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeWebApi = DefaultWhereNull(ExcludeWebApi, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeWebApiAgent = DefaultWhereNull(ExcludeWebApiAgent, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
-            ExcludeGrpcAgent = DefaultWhereNull(ExcludeGrpcAgent, () => CompareValue(ExcludeAll, YesOption) ? YesOption : NoOption);
+
+            if (!string.IsNullOrEmpty(Parent!.WebApiRoutePrefix))
+                WebApiRoutePrefix = string.IsNullOrEmpty(WebApiRoutePrefix) ? Parent!.WebApiRoutePrefix :
+                    $"{(Parent!.WebApiRoutePrefix.EndsWith('/') ? Parent!.WebApiRoutePrefix[..^1] : Parent!.WebApiRoutePrefix)}/{(WebApiRoutePrefix.StartsWith('/') ? WebApiRoutePrefix[1..] : WebApiRoutePrefix)}";
 
             InferInherits();
             PrepareConsts();
@@ -1168,6 +1241,18 @@ entities:
             PrepareOperations();
             InferImplements();
             PrepareConstructors();
+
+            ExcludeEntity = DefaultWhereNull(ExcludeEntity, () => false);
+            ExcludeAll = DefaultWhereNull(ExcludeAll, () => Operations!.Count == 0);
+            ExcludeIData = DefaultWhereNull(ExcludeIData, () => CompareValue(ExcludeAll, true));
+            ExcludeData = DefaultWhereNull(ExcludeData, () => CompareValue(ExcludeAll, true) ? "Exclude" : "Include");
+            ExcludeIDataSvc = DefaultWhereNull(ExcludeIDataSvc, () => CompareValue(ExcludeAll, true));
+            ExcludeDataSvc = DefaultWhereNull(ExcludeDataSvc, () => CompareValue(ExcludeAll, true));
+            ExcludeIManager = DefaultWhereNull(ExcludeIManager, () => CompareValue(ExcludeAll, true));
+            ExcludeManager = DefaultWhereNull(ExcludeManager, () => CompareValue(ExcludeAll, true));
+            ExcludeWebApi = DefaultWhereNull(ExcludeWebApi, () => CompareValue(ExcludeAll, true));
+            ExcludeWebApiAgent = DefaultWhereNull(ExcludeWebApiAgent, () => CompareValue(ExcludeAll, true));
+            ExcludeGrpcAgent = DefaultWhereNull(ExcludeGrpcAgent, () => CompareValue(ExcludeAll, true));
         }
 
         /// <summary>
@@ -1183,7 +1268,8 @@ entities:
             EntityInherits = Inherits;
             EntityInherits = DefaultWhereNull(EntityInherits, () => RefDataType switch
             {
-                "int" => "ReferenceDataBaseInt",
+                "int" => "ReferenceDataBaseInt32",
+                "long" => "ReferenceDataBaseInt64",
                 "Guid" => "ReferenceDataBaseGuid",
                 "string" => "ReferenceDataBaseString",
                 _ => CompareNullOrValue(OmitEntityBase, false) ? "EntityBase" : null
@@ -1191,7 +1277,8 @@ entities:
 
             ModelInherits = RefDataType switch
             {
-                "int" => "ReferenceDataBaseInt",
+                "int" => "ReferenceDataBaseInt32",
+                "long" => "ReferenceDataBaseInt64",
                 "Guid" => "ReferenceDataBaseGuid",
                 "string" => "ReferenceDataBaseString",
                 _ => EntityInherits == "EntityBase" ? null : EntityInherits
@@ -1346,7 +1433,8 @@ entities:
                     var iid = id.Type switch
                     {
                         "Guid" => "IGuidIdentifier",
-                        "int" => "IIntIdentifier",
+                        "int" => "IInt32Identifier",
+                        "long" => "IInt64Identifier",
                         "string" => "IStringIdentifier",
                         _ => "IIdentifier",
                     };
@@ -1444,6 +1532,15 @@ entities:
 
             if (UsesOData)
                 DataCtorParameters.Add(new ParameterConfig { Name = "OData", Type = ODataName, Text = $"{{{{{ODataName}}}}}" });
+
+            if (UsesHttpAgent)
+                DataCtorParameters.Add(new ParameterConfig { Name = "HttpAgent", Type = HttpAgentName, Text = $"{{{{{HttpAgentName}}}}}" });
+
+            if (UsesEntityFramework || UsesCosmos || UsesOData || UsesHttpAgent)
+            { 
+                DataCtorParameters.Add(new ParameterConfig { Name = "Mapper", Type = "AutoMapper.IMapper", Text = $"{{{{AutoMapper.IMapper}}}}" });
+                UsesAutoMapper = true;
+            }
 
             if (SupportsDataEvents)
                 DataCtorParameters.Add(new ParameterConfig { Name = "EvtPub", Type = $"IEventPublisher", Text = "{{IEventPublisher}}" });

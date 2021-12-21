@@ -2,6 +2,18 @@
 
 Represents the **NuGet** versions.
 
+## v4.2.4
+- *Fixed:* Issue [157](https://github.com/Avanade/Beef/issues/157) fixed. Renamed `DatabasePropertyMapper.DbType` method to be `SetDbType` to be consistent with the other related _set_ methods.
+
+## v4.2.3
+- *Fixed:* Issue [154](https://github.com/Avanade/Beef/issues/154) fixed. The field name is now included in the exception message when using `DatabaseRecord.GetOrdinal` to improve the usefulness of the message (i.e. it will identify the missing field).
+
+## v4.2.2
+- *Enhancement:* Changes related to the introduction of AutoMapper. The _Beef_ custom mapping is now solely maintained for the ADO.NET stored procedure parameter and corresponding data reader mapping only.
+
+## v4.2.1
+- *Enhancement:* Re-baseline all _Beef_ components to version v4.2.1 required by `Beef.Abstractions` introduction; including updating all dependent NuGet packages to their latest respective version.
+
 ## v4.1.6
 - *Enhancement:* Added Event Outbox support with `DatabaseEventOutboxBase`, `DatabaseEventOutboxItem` and `DatabaseEventOutboxInvoker` (enqueue events to the database on publish/send).
 - *Enhancement:* Added `IDatabase.EventOutboxInvoker` to access the corresponding event outbox capability.

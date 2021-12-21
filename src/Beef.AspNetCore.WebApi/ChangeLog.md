@@ -2,6 +2,16 @@
 
 Represents the **NuGet** versions.
 
+## v4.2.3
+- *Enhancement:* Updated `WebApiQueryString.PagingArgsSkipQueryStringNames` to support `offset` value, and 
+`WebApiQueryString.PagingArgsTakeQueryStringNames` to support `limit` value.
+
+## v4.2.2
+- *Fixed:* Updated internal _Beef_ dependencies to latest.
+
+## v4.2.1
+- *Enhancement:* Re-baseline all _Beef_ components to version v4.2.1 required by `Beef.Abstractions` introduction; including updating all dependent NuGet packages to their latest respective version.
+
 ## v4.1.8
 - *Enhancement:* Updated `WebApiStartup.ConfigurationBuilder` to finally probe the command-line arguments.
 - *Enhancement:* Updated project to produce symbol packages for improved [debugging](https://devblogs.microsoft.com/dotnet/improving-debug-time-productivity-with-source-link/).

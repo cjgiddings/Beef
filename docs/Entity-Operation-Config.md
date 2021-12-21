@@ -45,6 +45,10 @@ Category | Description
 [`Manager`](#Manager) | Provides the _Manager-layer_ configuration.
 [`DataSvc`](#DataSvc) | Provides the _Data Services-layer_ configuration.
 [`Data`](#Data) | Provides the generic _Data-layer_ configuration.
+[`Database`](#Database) | Provides the specific _Database (ADO.NET)_ configuration where `AutoImplement` is `Database`.
+[`Cosmos`](#Cosmos) | Provides the specific _Cosmos_ configuration where `AutoImplement` is `Cosmos`.
+[`OData`](#OData) | Provides the specific _OData_ configuration where `AutoImplement` is `OData`.
+[`HttpAgent`](#HttpAgent) | Provides the specific _HTTP Agent_ configuration where `AutoImplement` is `HttpAgent`.
 [`gRPC`](#gRPC) | Provides the _gRPC_ configuration.
 [`Exclude`](#Exclude) | Provides the _Exclude_ configuration.
 [`Collections`](#Collections) | Provides related child (hierarchical) configuration.
@@ -136,14 +140,51 @@ Provides the generic _Data-layer_ configuration.
 
 Property | Description
 -|-
-**`autoImplement`** | The operation override for the `Entity.AutoImplement`. Valid options are: `Database`, `EntityFramework`, `Cosmos`, `OData`, `None`. Defaults to `Entity.AutoImplement`. The corresponding `Entity.AutoImplement` must be defined for this to be enacted. Auto-implementation is applicable for all `Operation.Type` options with the exception of `Custom`.
+**`autoImplement`** | The operation override for the `Entity.AutoImplement`. Valid options are: `Database`, `EntityFramework`, `Cosmos`, `OData`, `HttpAgent`, `None`. Defaults to `Entity.AutoImplement`. The corresponding `Entity.AutoImplement` must be defined for this to be enacted. Auto-implementation is applicable for all `Operation.Type` options with the exception of `Custom`.
 `dataEntityMapper` | The override for the data entity `Mapper`. Used where the default generated `Mapper` is not applicable.
 `dataExtensions` | Indicates whether the `Data` extensions logic should be generated. Defaults to `Entity.DataExtensions`.
 `dataTransaction` | Indicates whether a `System.TransactionScope` should be created and orchestrated at the `Data`-layer. Where using an `EventOutbox` this is ignored as it is implied through its usage.
+`managerExtensions` | Indicates whether the `Manager` extensions logic should be generated. Defaults to `Entity.ManagerExtensions`.
+
+<br/>
+
+## Database
+Provides the specific _Database (ADO.NET)_ configuration where `AutoImplement` is `Database`.
+
+Property | Description
+-|-
 `databaseStoredProc` | The database stored procedure name used where `Operation.AutoImplement` is `Database`. Defaults to `sp` + `Entity.Name` + `Operation.Name`; e.g. `spPersonCreate`.
+
+<br/>
+
+## Cosmos
+Provides the specific _Cosmos_ configuration where `AutoImplement` is `Cosmos`.
+
+Property | Description
+-|-
 `cosmosContainerId` | The Cosmos `ContainerId` override used where `Operation.AutoImplement` is `Cosmos`. Overrides the `Entity.CosmosContainerId`.
 `cosmosPartitionKey` | The C# code override to be used for setting the optional Cosmos `PartitionKey` used where `Operation.AutoImplement` is `Cosmos`. Overrides the `Entity.CosmosPartitionKey`.
-`managerExtensions` | Indicates whether the `Manager` extensions logic should be generated. Defaults to `Entity.ManagerExtensions`.
+
+<br/>
+
+## OData
+Provides the specific _OData_ configuration where `AutoImplement` is `OData`.
+
+Property | Description
+-|-
+**`odataCollectionName`** | The override name of the underlying OData collection where `Operation.AutoImplement` is `OData`. Overriddes the `Entity.ODataCollectionName`; otherwise, the underlying `Simple.OData.Client` will attempt to infer.
+
+<br/>
+
+## HttpAgent
+Provides the specific _HTTP Agent_ configuration where `AutoImplement` is `HttpAgent`.
+
+Property | Description
+-|-
+`httpAgentRoute` | The HTTP Agent API route where `Operation.AutoImplement` is `HttpAgent`. This is appended to the `Entity.HttpAgentRoutePrefix`.
+**`httpAgentMethod`** | The HTTP Agent Method for the operation. Valid options are: `HttpGet`, `HttpPost`, `HttpPut`, `HttpDelete`, `HttpPatch`. Defaults to `Operation.WebApiMethod`.
+**`httpAgentModel`** | The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`). This can be overridden within the `Operation`(s).
+`httpAgentReturnModel` | The corresponding HTTP Agent model name (required where `AutoImplement` is `HttpAgent`). Defaults to `Operation.HttpAgentModel` where the `Operation.ReturnType` is equal to `Entity.Name` (same type). This can be overridden within the `Operation`(s).
 
 <br/>
 
@@ -161,16 +202,16 @@ Provides the _Exclude_ configuration.
 
 Property | Description
 -|-
-**`excludeAll`** | The option to exclude the generation of all `Operation` related output. Valid options are: `No`, `Yes`. Is a shorthand means for setting all of the other `Exclude*` properties to `true`.
-`excludeIData` | The option to exclude the generation of the operation within the `Data` interface (`IXxxData.cs`) output. Valid options are: `No`, `Yes`.
-`excludeData` | The option to exclude the generation of the operation within the `Data` class (`XxxData.cs`) output. Valid options are: `No`, `Yes`.
-`excludeIDataSvc` | The option to exclude the generation of the operation within the `DataSvc` interface (`IXxxDataSvc.cs`) output. Valid options are: `No`, `Yes`.
-`excludeDataSvc` | The option to exclude the generation of the operation within the `DataSvc` class (`XxxDataSvc.cs`) output. Valid options are: `No`, `Yes`.
-`excludeIManager` | The option to exclude the generation of the operation within the `Manager` interface (`IXxxManager.cs`) output. Valid options are: `No`, `Yes`.
-`excludeManager` | The option to exclude the generation of the operation within the `Manager` class (`XxxManager.cs`) output. Valid options are: `No`, `Yes`.
-`excludeWebApi` | The option to exclude the generation of the operation within the WebAPI `Controller` class (`XxxController.cs`) output. Valid options are: `No`, `Yes`.
-`excludeWebApiAgent` | The option to exclude the generation of the operation within the WebAPI consuming `Agent` class (`XxxAgent.cs`) output. Valid options are: `No`, `Yes`.
-`excludeGrpcAgent` | The option to exclude the generation of the operation within the gRPC consuming `Agent` class (`XxxAgent.cs`) output. Valid options are: `No`, `Yes`.
+**`excludeAll`** | Indicates whether to exclude the generation of all `Operation` related output. Is a shorthand means for setting all of the other `Exclude*` properties to `true`.
+`excludeIData` | Indicates whether to exclude the generation of the operation within the `Data` interface (`IXxxData.cs`) output.
+`excludeData` | Indicates whether to exclude the generation of the operation within the `Data` class (`XxxData.cs`) output.
+`excludeIDataSvc` | Indicates whether to exclude the generation of the operation within the `DataSvc` interface (`IXxxDataSvc.cs`) output.
+`excludeDataSvc` | Indicates whether to exclude the generation of the operation within the `DataSvc` class (`XxxDataSvc.cs`) output.
+`excludeIManager` | Indicates whether to exclude the generation of the operation within the `Manager` interface (`IXxxManager.cs`) output.
+`excludeManager` | Indicates whether to exclude the generation of the operation within the `Manager` class (`XxxManager.cs`) output.
+`excludeWebApi` | Indicates whether to exclude the generation of the operation within the WebAPI `Controller` class (`XxxController.cs`) output.
+`excludeWebApiAgent` | Indicates whether to exclude the generation of the operation within the WebAPI consuming `Agent` class (`XxxAgent.cs`) output.
+`excludeGrpcAgent` | Indicates whether to exclude the generation of the operation within the gRPC consuming `Agent` class (`XxxAgent.cs`) output.
 
 <br/>
 

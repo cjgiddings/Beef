@@ -2,6 +2,15 @@
 
 Represents the **NuGet** versions.
 
+## v4.2.3
+- *Fixed:* Updated internal _Beef_ dependencies to latest.
+
+## v4.2.2
+- *Enhancement:* Renamed `ILogicallyDeleted` to `ICdcLogicallyDeleted`; inherit from new `Beef.Entities.ILogicallyDeleted`.
+
+## v4.2.1
+- *Enhancement:* Re-baseline all _Beef_ components to version v4.2.1 required by `Beef.Abstractions` introduction; including updating all dependent NuGet packages to their latest respective version.
+
 ## v4.1.6
 - *Enhancement:* `CdcHostedService` now inherits from `Beef.Hosting.TimerHostedServiceBase`.
 - *Enhancement:* Updated project to produce symbol packages for improved [debugging](https://devblogs.microsoft.com/dotnet/improving-debug-time-productivity-with-source-link/).
